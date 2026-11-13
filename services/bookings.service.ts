@@ -118,7 +118,8 @@ export class BookingsService {
     if (this.createdBookingIds.size === 0) return;
     const ids = [...this.createdBookingIds];
     for (const id of ids) {
-      const response = await this.client.cancel(id);
+      // A retried DELETE that already went through answers 404, which counts as cancelled
+      const response = await this.client.cancel(id, { retryOnNetworkError: true });
       if (!response.ok() && response.status() !== 404) {
         logger.warn('Could not cancel booking during cleanup; it counts towards the 9-booking sandbox limit', {
           bookingId: id,

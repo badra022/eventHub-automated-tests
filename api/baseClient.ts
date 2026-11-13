@@ -19,6 +19,8 @@ export type QueryParams = Record<string, string | number | boolean>;
 export interface RequestOptions {
   token?: string | null;
   params?: QueryParams;
+  /** Retry on transient network errors even for non-GET methods; only for callers that accept a repeat (e.g. cleanup). */
+  retryOnNetworkError?: boolean;
 }
 
 /** Thin HTTP layer shared by the API clients: base URL, bearer auth and request logging. No assertions here. */
@@ -61,9 +63,9 @@ export abstract class BaseAPIClient {
       });
     let response: APIResponse;
     try {
-      // Only GET is retried: repeating a POST or DELETE could create duplicates or change the outcome
+      // GET is retried by default; repeating a POST or DELETE could change the outcome a test asserts
       response =
-        method === 'GET'
+        method === 'GET' || options.retryOnNetworkError
           ? await retry(fetch, {
               attempts: 3,
               delay: 1_000,

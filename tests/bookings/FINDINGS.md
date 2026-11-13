@@ -58,6 +58,7 @@ Severity: **Critical** (money or seats wrong for real users), **High**, **Medium
 | F5 | S12 depended on the decimal string format (`toFixed(2)`) | Schema check; exact numeric total kept |
 | F6 | The first push went straight to `main` without a PR | New work goes through a branch and a PR |
 | F7 | "Clear all bookings" was modelled as an in-page dialog; it is a native `confirm()`, and waiting for it after the click deadlocked the test | `MyBookingsPage.clearAllBookings` registers the dialog handler before clicking |
+| F8 | A cleanup `DELETE /bookings/:id` got `socket hang up (ECONNRESET)` and failed S08 after its assertions passed; only GET was retried | Cleanup in `BookingsService` and `EventsService` opts into `retryOnNetworkError` (a 404 on the retry counts as gone); test-path DELETEs are still not retried |
 
 ## 6. Environment notes
 

@@ -80,7 +80,7 @@ export class EventsService {
     if (this.createdEventIds.size === 0) return;
     const ids = [...this.createdEventIds];
     for (const id of ids) {
-      const response = await this.client.delete(id);
+      const response = await this.client.delete(id, { retryOnNetworkError: true });
       if (!response.ok() && response.status() !== 404) {
         logger.warn('Could not delete event during cleanup; it stays in the sandbox (limit 6 custom events)', {
           eventId: id,
