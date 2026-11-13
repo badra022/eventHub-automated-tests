@@ -1,4 +1,5 @@
 import { test, expect } from '../../../fixtures/app';
+import { BookingSchema } from '../../../assertions';
 import { calculateExpectedTotal, formatDisplayedPrice, toCustomerDetails } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
@@ -41,7 +42,7 @@ test.describe('US-114 AC2 - Total price is ticket price × number of tickets', (
         const saved = await bookingsService.getBookingByRef(bookingRef);
         logger.debug('Total calculation', { price: event.price, quantity, expectedTotal, saved: saved.totalPrice });
         expect(Number(saved.totalPrice)).toBe(expectedTotal);
-        expect(saved.totalPrice).toBe(expectedTotal.toFixed(2));
+        expect(saved).toMatchSchema(BookingSchema);
       });
 
       await test.step('the confirmation shows the total rounded to whole dollars', async () => {

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import type { Page, Request } from '@playwright/test';
 import type { ApiSuccess, Booking } from '../../api/types';
 import { EventDetailPage, EventsPage, MyBookingsPage, type CustomerDetails } from '../../pages';
 import type { BookingsService } from '../../services';
@@ -51,6 +51,29 @@ export class BookingUiHelpers {
   /** Books on the event page that is already open (after `openEvent`). */
   async bookOnOpenEventPage(customer: CustomerDetails, quantity = 1): Promise<UiBookingResult> {
     return this.submitBookingForm(customer, quantity);
+  }
+
+  /**
+   * Submits the open booking form with input the form should reject, and reports how many booking requests the
+   * page sent from then on. The caller asserts the validation message first, then that no request was sent.
+   */
+  async submitInvalidBookingForm(customer: CustomerDetails): Promise<{ eventPage: EventDetailPage; bookingRequestsSent: () => number }> {
+    const eventPage = new EventDetailPage(this.deps.page);
+    const form = eventPage.bookingForm;
+    await form.waitForLoaded();
+    await form.fillCustomer(customer);
+    this.logger.debug('Customer details', { ...customer });
+
+    let sent = 0;
+    this.deps.page.on('request', (request: Request) => {
+      if (request.method() === 'POST' && CREATE_BOOKING_URL.test(request.url())) {
+        sent++;
+        this.logger.warn('The booking form sent a booking request for input it should reject', { url: request.url() });
+      }
+    });
+    await form.submit();
+    this.logger.info('Submitted the booking form with input it should reject');
+    return { eventPage, bookingRequestsSent: () => sent };
   }
 
   /** Opens My Bookings and waits for the list to load. */

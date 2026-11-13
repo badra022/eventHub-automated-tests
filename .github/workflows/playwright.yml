@@ -153,11 +153,12 @@ jobs:
       - name: Regenerate baselines
         env:
           TEST_DATA_KEY: ${{ secrets.TEST_DATA_KEY }}
-        run: npx playwright test --project=chromium --grep=@visual --update-snapshots=all --workers=1
+        # "changed" rewrites only screenshots that differ; the hand-tuned *.aria.yml baselines (regexes) match, so they are kept
+        run: npx playwright test --project=chromium --grep=@visual --update-snapshots=changed --workers=1
 
       - name: Commit changed baselines
         run: |
-          git add -- 'tests/**/*-linux.png' 'tests/**/*.aria.yml'
+          git add -- 'tests/**/*-linux.png'
           if git diff --cached --quiet; then
             echo "Baselines are already up to date."
             exit 0

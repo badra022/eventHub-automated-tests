@@ -35,15 +35,15 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
       await test.step("user B cannot read the booking by id or by reference", async () => {
         const byId = await bookingsService.fetchBooking(booking.id, asUserB);
         const byRef = await bookingsService.fetchBookingByRef(booking.bookingRef, asUserB);
-        logger.debug('User B read attempts', { byId: byId.status(), byRef: byRef.status(), body: await byId.json() });
         expect(FORBIDDEN).toContain(byId.status());
         expect(FORBIDDEN).toContain(byRef.status());
+        logger.info('Step done: user B cannot read the booking', { scenarioId: 'S38', byId: byId.status(), byRef: byRef.status() });
       });
 
       await test.step('user B cannot cancel the booking', async () => {
         const cancel = await bookingsService.requestCancel(booking.id, asUserB);
-        logger.debug('User B cancel attempt', { status: cancel.status(), body: await cancel.json() });
         expect(FORBIDDEN).toContain(cancel.status());
+        logger.info('Step done: user B cannot cancel the booking', { scenarioId: 'S38', cancel: cancel.status() });
       });
 
       await test.step("user A's booking and the event's seats are unchanged", async () => {

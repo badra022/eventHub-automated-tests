@@ -5,7 +5,7 @@ export interface RetryOptions {
   onRetry?: (error: unknown, attempt: number) => void;
 }
 
-const TRANSIENT_NETWORK_ERROR = /ECONNRESET|ETIMEDOUT|ECONNREFUSED|EPIPE|socket hang up|read ECONN/i;
+const TRANSIENT_NETWORK_ERROR = /ECONNRESET|ETIMEDOUT|ECONNREFUSED|EACCES|EPIPE|socket hang up|read ECONN/i;
 
 export function isTransientNetworkError(error: unknown): boolean {
   return TRANSIENT_NETWORK_ERROR.test(error instanceof Error ? error.message : String(error));

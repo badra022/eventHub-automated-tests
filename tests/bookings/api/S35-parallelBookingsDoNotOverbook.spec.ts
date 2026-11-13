@@ -21,7 +21,7 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         {
           type: 'exclusionReason',
           description:
-            'Known defect (R3, overbooking): 6 parallel single-ticket bookings for a 2-seat event return 4-6 x 201 (3 of 3 runs on 2026-11-13); seat reservation is not atomic',
+            'Known defect (R3, overbooking): when 6 single-ticket bookings for a 2-seat event arrive at the same moment, 3-6 get 201 (5 of 5 framework runs on 2026-11-13); staggered requests did not overbook (1 independent run). Timing-dependent: seat reservation is not atomic',
         },
       ],
     },
