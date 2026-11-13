@@ -38,6 +38,13 @@ export class BookingsService {
     return response;
   }
 
+  /** GET /bookings without asserting the status (isolation and auth tests). */
+  async requestList(query: ListBookingsQuery = {}, options?: RequestOptions): Promise<APIResponse> {
+    const response = await this.client.list(query, options);
+    logger.info('Sent list bookings request', { query, status: response.status() });
+    return response;
+  }
+
   /** GET /bookings/{id} without asserting the status. */
   async fetchBooking(id: number | string, options?: RequestOptions): Promise<APIResponse> {
     const response = await this.client.get(id, options);

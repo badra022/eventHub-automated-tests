@@ -39,6 +39,29 @@ export class BookingUiHelpers {
     return this.submitBookingForm(customer, quantity);
   }
 
+  /** Opens the event page and waits for the booking form, for tests that inspect the form before booking. */
+  async openEvent(eventId: number): Promise<EventDetailPage> {
+    const eventPage = new EventDetailPage(this.deps.page);
+    await this.deps.navigator.toEventPage(eventId);
+    await eventPage.bookingForm.waitForLoaded();
+    this.logger.info('Opened the event page', { eventId });
+    return eventPage;
+  }
+
+  /** Books on the event page that is already open (after `openEvent`). */
+  async bookOnOpenEventPage(customer: CustomerDetails, quantity = 1): Promise<UiBookingResult> {
+    return this.submitBookingForm(customer, quantity);
+  }
+
+  /** Opens My Bookings and waits for the list to load. */
+  async openMyBookings(): Promise<MyBookingsPage> {
+    const myBookings = new MyBookingsPage(this.deps.page);
+    await this.deps.navigator.toMyBookingsPage();
+    await myBookings.waitForLoaded();
+    this.logger.info('Opened My Bookings');
+    return myBookings;
+  }
+
   /** The full user journey: events list -> event card -> booking form -> confirm. */
   async bookFromEventsList(eventTitle: string, customer: CustomerDetails, quantity = 1): Promise<UiBookingResult> {
     this.logger.info('Booking through the events list', { eventTitle, quantity });

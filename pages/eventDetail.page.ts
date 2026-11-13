@@ -30,6 +30,16 @@ export class EventDetailPage {
   getAvailableSeats(): Locator { return this.availableSeats; }
   getSoldOutMessage(): Locator { return this.soldOutMessage; }
 
+  /** Available seats as shown on the page ("<available> / <total> seats"). */
+  async readAvailableSeats(): Promise<number> {
+    const text = (await this.availableSeats.textContent()) ?? '';
+    const match = text.match(/^\s*(\d+)\s*\//);
+    if (!match) {
+      throw new Error(`Unexpected available seats text "${text}"`);
+    }
+    return Number(match[1]);
+  }
+
   async waitForLoaded(): Promise<void> {
     await this.title.waitFor({ state: 'visible' });
   }

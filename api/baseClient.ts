@@ -1,5 +1,6 @@
 import type { APIRequestContext, APIResponse } from '@playwright/test';
 import { Logger } from '../utils/logger';
+import { retry } from '../utils/retry';
 
 export interface APIClientConfig {
   baseUrl: string;
@@ -51,14 +52,25 @@ export abstract class BaseAPIClient {
     }
 
     const started = performance.now();
-    let response: APIResponse;
-    try {
-      response = await this.request.fetch(`${this.baseUrl}${path}`, {
+    const fetch = () =>
+      this.request.fetch(`${this.baseUrl}${path}`, {
         method,
         headers,
         params: options.params,
         ...(data === undefined ? {} : { data }),
       });
+    let response: APIResponse;
+    try {
+      // Only GET is retried: repeating a POST or DELETE could create duplicates or change the outcome
+      response =
+        method === 'GET'
+          ? await retry(fetch, {
+              attempts: 3,
+              delay: 1_000,
+              onRetry: (error, attempt) =>
+                this.logger.warn(`${method} ${path} hit a transient network error, retrying`, { attempt, error }),
+            })
+          : await fetch();
     } catch (error) {
       this.logger.error(`${method} ${path} failed before a response was received`, { params: options.params, error });
       throw error;

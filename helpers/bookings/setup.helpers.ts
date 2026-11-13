@@ -1,4 +1,4 @@
-import type { Booking, CreateEventInput, Event } from '../../api/types';
+import type { Booking, CreateBookingInput, CreateEventInput, Event } from '../../api/types';
 import type { BookingsService, EventsService } from '../../services';
 import { Logger } from '../../utils/logger';
 import { buildBookingInput, buildEventInput } from './testData.helpers';
@@ -24,6 +24,13 @@ export class BookingSetupHelpers {
     this.logger.info('Setting up an event through the API', { title: input.title, price: input.price, totalSeats: input.totalSeats });
     this.logger.debug('Event payload', { input, overrides });
     return this.deps.eventsService.createEvent(input);
+  }
+
+  /** Creates one booking with a generated customer; `overrides` replace any field (quantity, customer, ...). */
+  async createBooking(eventId: number, overrides: Partial<CreateBookingInput> = {}): Promise<Booking> {
+    const input = buildBookingInput(eventId, overrides);
+    this.logger.info('Setting up a booking through the API', { eventId, quantity: input.quantity });
+    return this.deps.bookingsService.createBooking(input);
   }
 
   /** Creates `count` bookings of `quantity` tickets each for an event, with generated customers. */

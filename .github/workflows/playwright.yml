@@ -28,6 +28,10 @@ on:
         type: choice
         options: [error, warn, info, debug]
         default: info
+      update_snapshots:
+        description: Regenerate the Linux visual baselines (@visual, chromium) and commit them to this branch instead of testing
+        type: boolean
+        default: false
   # Called by the app repository after each deploy: runs the smoke suite
   repository_dispatch:
     types: [app-deployed]
@@ -61,6 +65,7 @@ jobs:
   test:
     name: Tests (shard ${{ matrix.shard }}/4)
     needs: typecheck
+    if: ${{ !inputs.update_snapshots }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: ${{ inputs.app_env || 'prod' }}
@@ -115,6 +120,8 @@ jobs:
       - name: Run tests
         env:
           TEST_DATA_KEY: ${{ secrets.TEST_DATA_KEY }}
+          # Picks this shard's block of pool accounts (see fixtures/auth.ts)
+          SHARD_INDEX: ${{ matrix.shard }}
         run: npx playwright test ${{ steps.suite.outputs.args }} --shard=${{ matrix.shard }}/4 --reporter=blob,list
 
       - name: Upload blob report
@@ -125,10 +132,44 @@ jobs:
           path: blob-report
           retention-days: 7
 
+  update-snapshots:
+    name: Update Linux visual baselines
+    needs: typecheck
+    if: ${{ inputs.update_snapshots }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.app_env || 'prod' }}
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Regenerate baselines
+        env:
+          TEST_DATA_KEY: ${{ secrets.TEST_DATA_KEY }}
+        run: npx playwright test --project=chromium --grep=@visual --update-snapshots=all --workers=1
+
+      - name: Commit changed baselines
+        run: |
+          git add -- 'tests/**/*-linux.png' 'tests/**/*.aria.yml'
+          if git diff --cached --quiet; then
+            echo "Baselines are already up to date."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "test(visual): update Linux baselines"
+          git push
+
   report:
     name: Merge reports
     needs: test
-    if: ${{ !cancelled() }}
+    if: ${{ !cancelled() && needs.test.result != 'skipped' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

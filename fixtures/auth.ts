@@ -1,8 +1,10 @@
 import path from 'node:path';
+import type { Browser, PlaywrightWorkerArgs } from '@playwright/test';
 import { test as base } from './base';
 import { testDataRegistry } from './data';
 import { AuthService } from '../services/auth.service';
 import type { UserCredentials } from '../api/types';
+import type { AppEnvironment, EnvConfig } from '../config/env';
 import { LoginPage } from '../pages/login.page';
 import { decryptRecord } from '../utils/crypto';
 import { generateRandomText, uniqueSuffix } from '../utils/common';
@@ -26,14 +28,63 @@ type AuthWorkerFixtures = {
   authUser: AuthenticatedUser;
   /** Storage state file of `account` logged in through the UI, reused by every page of the worker. */
   authStorageStatePath: string;
+  /**
+   * "User B" for isolation and authorisation tests (test-data/otherUsers.json). Shared by all workers, so tests
+   * only read with it or attempt forbidden actions; they never create data in its sandbox.
+   */
+  otherUser: AuthenticatedUser;
+  /** Storage state file of `otherUser` logged in through the UI. */
+  otherUserStorageStatePath: string;
 };
 
 function toCredentials(record: Record<string, unknown>, key: string): UserCredentials {
   const { email, password } = record;
   if (typeof email !== 'string' || !email || typeof password !== 'string' || !password) {
-    throw new Error(`Account "${key}" in test-data/users.json must contain non-empty email and password values.`);
+    throw new Error(`Account "${key}" in test-data must contain non-empty email and password values.`);
   }
   return { email, password };
+}
+
+function readAccount(source: string, key: string, envConfig: EnvConfig, appEnv: AppEnvironment): UserCredentials {
+  try {
+    return toCredentials(decryptRecord(testDataRegistry.resolve(source, key, appEnv), envConfig.TEST_DATA_KEY), key);
+  } catch (error) {
+    logger.error('Could not read the account from test data', { source, account: key, error });
+    throw error;
+  }
+}
+
+async function loginThroughApi(
+  playwright: PlaywrightWorkerArgs['playwright'],
+  envConfig: EnvConfig,
+  credentials: UserCredentials,
+): Promise<AuthenticatedUser> {
+  const context = await playwright.request.newContext();
+  try {
+    const { token, user } = await new AuthService(context, { baseUrl: envConfig.API_BASE_URL }).login(credentials);
+    return { ...credentials, id: user.id, token };
+  } finally {
+    await context.dispose();
+  }
+}
+
+async function loginThroughUi(browser: Browser, envConfig: EnvConfig, credentials: UserCredentials, filePath: string): Promise<void> {
+  const done = logger.timed('Logged in through the UI');
+  const page = await browser.newPage();
+  try {
+    const loginPage = new LoginPage(page);
+    await new Navigation(page, { appBaseUrl: envConfig.APP_BASE_URL }).toLoginPage();
+    await loginPage.login(credentials.email, credentials.password);
+    await loginPage.waitForLoggedIn();
+    await page.context().storageState({ path: filePath });
+  } catch (error) {
+    logger.error('UI login failed', { url: page.url(), email: credentials.email, error });
+    throw error;
+  } finally {
+    await page.close();
+  }
+  done();
+  logger.debug('Saved UI session', { filePath });
 }
 
 export const test = base.extend<{}, AuthWorkerFixtures>({
@@ -58,22 +109,21 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
         logger.error('No pool accounts for this environment in test-data/users.json', { appEnv });
         throw new Error(`No accounts for "${appEnv}" in test-data/users.json. Run "npm run users:provision".`);
       }
-      if (workerInfo.parallelIndex >= keys.length) {
-        logger.warn('More workers than pool accounts: accounts are shared and bookings may be evicted', {
+      // CI shards run on separate machines with the same worker indexes, so each shard gets its own block of accounts
+      const shardIndex = Number(process.env.SHARD_INDEX ?? 1);
+      const slot = (shardIndex - 1) * workerInfo.config.workers + workerInfo.parallelIndex;
+      if (slot >= keys.length) {
+        logger.warn('More concurrent workers than pool accounts: accounts are shared and bookings may be evicted', {
+          shardIndex,
           workers: workerInfo.config.workers,
+          slot,
           accounts: keys.length,
         });
       }
 
-      const key = keys[workerInfo.parallelIndex % keys.length];
-      let credentials: UserCredentials;
-      try {
-        credentials = toCredentials(decryptRecord(testDataRegistry.resolve('users', key, appEnv), envConfig.TEST_DATA_KEY), key);
-      } catch (error) {
-        logger.error('Could not read the pool account', { account: key, error });
-        throw error;
-      }
-      logger.info('Using pool account', { account: key, worker: workerInfo.parallelIndex });
+      const key = keys[slot % keys.length];
+      const credentials = readAccount('users', key, envConfig, appEnv);
+      logger.info('Using pool account', { account: key, worker: workerInfo.parallelIndex, shardIndex });
       logger.debug('Worker account', { email: credentials.email, password: credentials.password });
       await use(credentials);
     },
@@ -82,11 +132,9 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
 
   authUser: [
     async ({ account, envConfig, playwright }, use) => {
-      const context = await playwright.request.newContext();
-      const { token, user } = await new AuthService(context, { baseUrl: envConfig.API_BASE_URL }).login(account);
-      await context.dispose();
+      const user = await loginThroughApi(playwright, envConfig, account);
       logger.info('Got an API token for the worker account', { userId: user.id });
-      await use({ ...account, id: user.id, token });
+      await use(user);
     },
     { scope: 'worker' },
   ],
@@ -94,24 +142,25 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
   authStorageStatePath: [
     async ({ account, envConfig, browser }, use, workerInfo) => {
       const filePath = path.join(AUTH_STATE_DIR, `${workerInfo.project.name}-worker-${workerInfo.parallelIndex}.json`);
-      const done = logger.timed('Logged in through the UI');
+      await loginThroughUi(browser, envConfig, account, filePath);
+      await use(filePath);
+    },
+    { scope: 'worker' },
+  ],
 
-      const page = await browser.newPage();
-      try {
-        const loginPage = new LoginPage(page);
-        await new Navigation(page, { appBaseUrl: envConfig.APP_BASE_URL }).toLoginPage();
-        await loginPage.login(account.email, account.password);
-        await loginPage.waitForLoggedIn();
-        await page.context().storageState({ path: filePath });
-      } catch (error) {
-        logger.error('UI login failed', { url: page.url(), email: account.email, error });
-        throw error;
-      } finally {
-        await page.close();
-      }
+  otherUser: [
+    async ({ appEnv, envConfig, playwright }, use) => {
+      const user = await loginThroughApi(playwright, envConfig, readAccount('otherUsers', 'userB', envConfig, appEnv));
+      logger.info('Got an API token for user B', { userId: user.id });
+      await use(user);
+    },
+    { scope: 'worker' },
+  ],
 
-      done();
-      logger.debug('Saved UI session', { filePath });
+  otherUserStorageStatePath: [
+    async ({ otherUser, envConfig, browser }, use, workerInfo) => {
+      const filePath = path.join(AUTH_STATE_DIR, `${workerInfo.project.name}-worker-${workerInfo.parallelIndex}-userB.json`);
+      await loginThroughUi(browser, envConfig, otherUser, filePath);
       await use(filePath);
     },
     { scope: 'worker' },

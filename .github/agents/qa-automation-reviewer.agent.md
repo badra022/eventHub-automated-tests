@@ -32,6 +32,7 @@ Find the PR, its branch, the changed files, and every new or changed test (scena
   - Sensitive values only appear as meta fields (encrypted by the logger), never in message text, assertion messages, or reports.
   - No shared state: each test creates its own event; created data is cleaned up.
   - Static data goes through the `data` fixture; credentials are only stored encrypted.
+- **Snapshots**: every `@visual` test has committed `*.aria.yml` baselines with per-run values as regexes, screenshots target a component (not the page) and mask per-run content, and Linux PNG baselines exist (or the PR says the `update_snapshots` run is pending). Review baseline diffs in the PR as carefully as code.
 - **Assertion integrity**: flag weakened or always-passing assertions, swallowed errors, `test.only`/`test.skip`, fixed sleeps, unjustified retries.
 - **Typecheck**: `npm run typecheck` passes with zero errors.
 - **Security**: no secrets in code, data, or reports; `.env` and `.auth/` not committed; new dependencies justified and `npm audit` clean.

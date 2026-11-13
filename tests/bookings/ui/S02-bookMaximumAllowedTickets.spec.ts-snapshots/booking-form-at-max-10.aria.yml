@@ -1,0 +1,15 @@
+- text: Tickets
+- button "−"
+- text: "10"
+- button "+" [disabled]
+- text: (max 10) Full Name*
+- textbox "Full Name*":
+  - /placeholder: Your full name
+- text: Email*
+- textbox "Email*":
+  - /placeholder: you@email.com
+- text: Phone Number*
+- textbox "Phone Number*":
+  - /placeholder: +91 98765 43210
+- text: $1,500 × 10 tickets $15,000 Total $15,000
+- button "Confirm Booking"

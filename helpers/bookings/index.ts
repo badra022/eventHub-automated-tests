@@ -9,6 +9,7 @@ export * from './types';
 export * from './testData.helpers';
 export * from './setup.helpers';
 export * from './ui.helpers';
+export * from './cancellation.helpers';
 
 export interface BookingHelpersDependencies {
   page: Page;

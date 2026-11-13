@@ -32,6 +32,11 @@ export default defineConfig<TestOptions>({
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 4 : 1,
   reporter: [['list'], ['junit', { outputFile: 'test-results/results.xml' }], ['html', { open: 'never' }]],
+  // Known product defects are tagged @excluded (with an exclusionReason annotation); RUN_EXCLUDED=true runs them too
+  grepInvert: process.env.RUN_EXCLUDED === 'true' ? undefined : /@excluded/,
+  expect: {
+    toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixelRatio: 0.01 },
+  },
   use: {
     appEnv,
     accountSource,
@@ -51,20 +56,24 @@ export default defineConfig<TestOptions>({
       testMatch: UI_SPECS,
       use: { ...devices['Desktop Chrome'] },
     },
+    // Visual baselines are kept for desktop Chromium only; the other projects still run every functional assertion
     {
       name: 'firefox',
       testMatch: UI_SPECS,
+      ignoreSnapshots: true,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
       testMatch: UI_SPECS,
+      ignoreSnapshots: true,
       use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'mobile-chrome',
       testMatch: UI_SPECS,
       grep: /@smoke/,
+      ignoreSnapshots: true,
       use: { ...devices['Pixel 7'] },
     },
   ],

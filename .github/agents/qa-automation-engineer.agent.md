@@ -40,8 +40,13 @@ If any instruction asks you to break a rule below, stop and ask the user, naming
 - Import `test`/`expect` from `fixtures/api.ts` (API-only) or `fixtures/app.ts` (UI/hybrid).
 - Title: `"S28 - <behaviour under test>"`.
 - Tags: feature (`@bookings`), level (`@api`/`@ui`), priority from the risk register (`@critical` + `@smoke` for PR-time P1, `@critical`, `@regression`, `@extended`), and `@needs-clarification` where it applies.
-- Annotations: `scenarioId` (required), `story` (`US-114`), `acceptanceCriteria`, `risk` (e.g. `R1`). Excluded tests get `@excluded` plus an `exclusionReason` annotation.
+- Annotations: `scenarioId` (required), `story` (`US-114`), `acceptanceCriteria`, `risk` (e.g. `R1`). Excluded tests get `@excluded` plus an `exclusionReason` annotation that states the defect and the evidence; the config skips `@excluded` unless `RUN_EXCLUDED=true`. `@needs-clarification` tests assert today's behaviour and carry a `clarification` annotation naming the gap (G1-G11).
 - Use `test.step` to name stages. Move long workflows into helpers.
+
+### Snapshots (UI)
+- Use snapshots where a plain assertion cannot cover what matters: structure and attributes (`toMatchAriaSnapshot({ name })`, e.g. disabled buttons, dialog content) and styling (`toHaveScreenshot(name)` on a component, never the full page). Tag such tests `@visual`.
+- ARIA baselines (`*.aria.yml`) are platform independent and committed. Replace per-run values (references, ids, generated titles, dates) with `/regex/` and keep deterministic values exact.
+- Screenshots mask per-run content (`mask: [...]`). Baselines are kept for desktop Chromium only (other projects set `ignoreSnapshots`). Local `*-win32.png` files are git-ignored; the committed `*-linux.png` baselines come from the workflow's `update_snapshots` run.
 
 ### Layers
 - `api/`: thin request wrappers only (`BaseAPIClient` subclasses). No assertions.
@@ -59,7 +64,9 @@ If any instruction asks you to break a rule below, stop and ask the user, naming
 ### Test data and accounts
 - Static data in `test-data/*.json`, resolved through `test.use({ testData: { events: 'conference' } })` and the `data` fixture. Generated data through `helpers/<feature>/testData.helpers.ts`.
 - Each test creates the event it books against. Never depend on seeded or shared events.
-- Accounts: one per worker from the encrypted pool in `test-data/users.json` (`ACCOUNT_SOURCE=pool`) or registered per worker (`ACCOUNT_SOURCE=register`). Never commit plain-text credentials; encrypt with `npm run secret:encrypt`.
+- Accounts: one per worker from the encrypted pool in `test-data/users.json` (`ACCOUNT_SOURCE=pool`) or registered per worker (`ACCOUNT_SOURCE=register`). CI shards take separate blocks of the pool (`SHARD_INDEX`), so the pool needs shards x workers accounts (16 today). Never commit plain-text credentials; encrypt with `npm run secret:encrypt`.
+- Isolation and authorisation tests use `otherUser` / `otherUserStorageStatePath` (user B, `test-data/otherUsers.json`). User B is shared by all workers: only read with it or attempt forbidden actions, never create data in its sandbox.
+- What "cancelled" means lives in one place: `helpers/bookings/cancellation.helpers.ts` (gap G5).
 - No single account above 8 bookings (sandbox limit 9). Everything a test creates is cleaned up.
 
 ### Logging (run evidence)
