@@ -3,6 +3,10 @@
     "userB": {
       "email": "enc:v1:p72pcIOkiMhFyVcqBqYpJA:sV1JXRB1ciZWNOkq:yWp-1JOSrwGjahTEO8N3wA:N7xrlm49RF1T7DE2pld1NdtFFeItYcpdR-gPIO3tN0LaUvLJfLhGnuCh",
       "password": "enc:v1:kczzI_sGLsFHew8PWTYyig:FzEtuFAyMtPLwIdo:Gum6ESdPBSOfB2bKIAEgvQ:f_wyyALwNKNyV7klTP7mqA"
+    },
+    "sandboxLimitUser": {
+      "email": "enc:v1:CRuWvjO0Fb-IZ6UaGKZyGA:cXKYFI9umOZRtHEX:seVkx6KcIW0FlH-exZYBVg:gX0JZPRgxgnkOjFmd2gIzyGQD4-rC_rx2cHH6-2JP5VqtgCJK178jXtq",
+      "password": "enc:v1:lI0gb3PPsBXH0mMpZR_qXA:K7RvCT-0LkkTxJNc:otAptMb5fmthvL-vcwpMAQ:QU3zuF45X4tu-tTdUHMHQQ"
     }
   }
 }

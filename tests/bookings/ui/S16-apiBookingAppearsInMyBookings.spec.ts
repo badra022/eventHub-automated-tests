@@ -10,9 +10,10 @@ test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
   test(
     'S16 - a booking made through the API appears in My Bookings with the same reference, event, tickets and total',
     {
-      tag: ['@bookings', '@ui', '@critical', '@smoke', '@visual'],
+      tag: ['@bookings', '@ui', '@critical', '@smoke', '@visual', '@cross-browser'],
       annotation: [
         { type: 'scenarioId', description: 'S16' },
+        { type: 'alsoCovers', description: 'S41 (runs on Firefox, WebKit and a mobile viewport)' },
         { type: 'story', description: 'US-114' },
         { type: 'acceptanceCriteria', description: 'AC3' },
         { type: 'risk', description: 'R4' },

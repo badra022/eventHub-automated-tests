@@ -9,3 +9,4 @@ export { BookingCard } from './components/bookingCard.component';
 export { ConfirmDialog } from './components/confirmDialog.component';
 
 export type { CustomerDetails, BookingField } from './components/bookingForm.component';
+export type { DialogDismissal } from './components/confirmDialog.component';

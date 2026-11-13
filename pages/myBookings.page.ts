@@ -10,6 +10,7 @@ export class MyBookingsPage {
   private readonly heading: Locator;
   private readonly bookingCards: Locator;
   private readonly emptyState: Locator;
+  private readonly emptyStateBrowseLink: Locator;
   private readonly cancelledMessage: Locator;
   private readonly clearAllButton: Locator;
 
@@ -19,6 +20,7 @@ export class MyBookingsPage {
     this.heading = page.getByRole('heading', { name: 'My Bookings', level: 1 });
     this.bookingCards = page.getByTestId('booking-card');
     this.emptyState = page.getByRole('heading', { name: 'No bookings yet' });
+    this.emptyStateBrowseLink = page.getByRole('main').getByRole('link', { name: 'Browse Events' });
     // A toast, not role=alert: Next.js keeps an empty role=alert route announcer on every page
     this.cancelledMessage = page.getByText('Booking cancelled successfully');
     this.clearAllButton = page.getByRole('button', { name: 'Clear all bookings' });
@@ -27,6 +29,7 @@ export class MyBookingsPage {
   getHeading(): Locator { return this.heading; }
   getBookingCards(): Locator { return this.bookingCards; }
   getEmptyState(): Locator { return this.emptyState; }
+  getEmptyStateBrowseLink(): Locator { return this.emptyStateBrowseLink; }
   getCancelledMessage(): Locator { return this.cancelledMessage; }
 
   booking(bookingRef: string): BookingCard {
@@ -38,9 +41,16 @@ export class MyBookingsPage {
     await this.confirmDialog.confirm();
   }
 
-  async clearAllBookings(): Promise<void> {
+  /** "Clear all bookings" asks through a native confirm(); accepts it and returns its message. */
+  async clearAllBookings(): Promise<string> {
+    let message = '';
+    // A native dialog blocks the click until it is handled, so the handler must exist before clicking
+    this.page.once('dialog', async (dialog) => {
+      message = dialog.message();
+      await dialog.accept();
+    });
     await this.clearAllButton.click();
-    await this.confirmDialog.confirm();
+    return message;
   }
 
   async waitForLoaded(): Promise<void> {
