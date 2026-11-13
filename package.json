@@ -1,0 +1,30 @@
+{
+  "name": "event-hub-automated-tests",
+  "version": "1.0.0",
+  "description": "Playwright + TypeScript automated tests for the EventHub booking platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:api": "playwright test --project=api",
+    "test:report": "playwright show-report",
+    "typecheck": "tsc --noEmit",
+    "secret:encrypt": "tsx scripts/secret.ts encrypt",
+    "secret:decrypt": "tsx scripts/secret.ts decrypt",
+    "users:provision": "tsx scripts/provision-users.ts"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.0.1",
+    "dotenv": "^17.4.2",
+    "typescript": "^6.0.3",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.0"
+  }
+}
