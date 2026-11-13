@@ -1,0 +1,174 @@
+name: Playwright tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Nightly: every project, all browsers
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      app_env:
+        description: Environment under test
+        type: choice
+        options: [prod]
+        default: prod
+      project:
+        description: Playwright project (all = every project)
+        type: choice
+        options: [all, api, chromium, firefox, webkit, mobile-chrome]
+        default: all
+      grep:
+        description: Tag or title filter, e.g. @smoke or @regression (empty = everything)
+        type: string
+        default: ''
+  # Called by the app repository after each deploy: runs the smoke suite
+  repository_dispatch:
+    types: [app-deployed]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  APP_ENV: ${{ inputs.app_env || 'prod' }}
+  ACCOUNT_SOURCE: ${{ vars.ACCOUNT_SOURCE || 'pool' }}
+  LOG_LEVEL: ${{ vars.LOG_LEVEL || 'info' }}
+
+jobs:
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  test:
+    name: Tests (shard ${{ matrix.shard }}/4)
+    needs: typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ inputs.app_env || 'prod' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - name: Select suite
+        id: suite
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_PROJECT: ${{ inputs.project }}
+          INPUT_GREP: ${{ inputs.grep }}
+        run: |
+          case "$EVENT" in
+            pull_request|repository_dispatch)
+              args="--project=api --project=chromium --grep=@smoke"; browsers="chromium" ;;
+            push)
+              args="--project=api --project=chromium"; browsers="chromium" ;;
+            schedule)
+              args=""; browsers="chromium firefox webkit" ;;
+            workflow_dispatch)
+              args=""; browsers="chromium firefox webkit"
+              if [ "$INPUT_PROJECT" != "all" ]; then
+                args="--project=$INPUT_PROJECT"
+                case "$INPUT_PROJECT" in
+                  firefox|webkit) browsers="$INPUT_PROJECT" ;;
+                  *) browsers="chromium" ;;
+                esac
+              fi
+              if [ -n "$INPUT_GREP" ]; then args="$args --grep=$INPUT_GREP"; fi ;;
+          esac
+          echo "args=$args" >> "$GITHUB_OUTPUT"
+          echo "browsers=$browsers" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.suite.outputs.browsers }}
+
+      - run: npx playwright install --with-deps ${{ steps.suite.outputs.browsers }}
+
+      - name: Run tests
+        env:
+          TEST_DATA_KEY: ${{ secrets.TEST_DATA_KEY }}
+        run: npx playwright test ${{ steps.suite.outputs.args }} --shard=${{ matrix.shard }}/4 --reporter=blob,list
+
+      - name: Upload blob report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report
+          retention-days: 7
+
+  report:
+    name: Merge reports
+    needs: test
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-blob-reports
+          pattern: blob-report-*
+          merge-multiple: true
+
+      - name: Merge into HTML and JUnit
+        env:
+          PLAYWRIGHT_JUNIT_OUTPUT_NAME: test-results/results.xml
+        run: npx playwright merge-reports --reporter=html,junit ./all-blob-reports
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results/results.xml
+          retention-days: 14
+
+      - name: Upload report for GitHub Pages
+        if: ${{ github.event_name == 'push' || github.event_name == 'schedule' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: playwright-report
+
+  publish:
+    name: Publish report
+    needs: report
+    if: ${{ !cancelled() && (github.event_name == 'push' || github.event_name == 'schedule') }}
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

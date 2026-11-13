@@ -1,0 +1,44 @@
+{
+  "validCustomer": {
+    "customerName": "Priya Sharma",
+    "customerEmail": "priya.sharma@example.com",
+    "customerPhone": "+91-9876543210",
+    "quantity": 1
+  },
+  "groupBooking": {
+    "customerName": "Arjun Mehta",
+    "customerEmail": "arjun.mehta@example.com",
+    "customerPhone": "9876501234",
+    "quantity": 3
+  },
+  "maxTickets": {
+    "customerName": "Sara Khan",
+    "customerEmail": "sara.khan@example.com",
+    "customerPhone": "+44 7700 900123",
+    "quantity": 10
+  },
+  "nameTooShort": {
+    "customerName": "A",
+    "customerEmail": "short.name@example.com",
+    "customerPhone": "9876543210",
+    "quantity": 1
+  },
+  "invalidEmail": {
+    "customerName": "Invalid Email",
+    "customerEmail": "not-an-email",
+    "customerPhone": "9876543210",
+    "quantity": 1
+  },
+  "phoneNineDigits": {
+    "customerName": "Short Phone",
+    "customerEmail": "short.phone@example.com",
+    "customerPhone": "987654321",
+    "quantity": 1
+  },
+  "phoneWithoutDigits": {
+    "customerName": "Dashes Phone",
+    "customerEmail": "dashes.phone@example.com",
+    "customerPhone": "----------",
+    "quantity": 1
+  }
+}

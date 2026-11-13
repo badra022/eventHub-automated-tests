@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES6",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM"],
+    "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "include": [
+    "playwright.config.ts",
+    "global-setup.ts",
+    "tests/**/*.ts",
+    "fixtures/**/*.ts",
+    "assertions/**/*.ts",
+    "api/**/*.ts",
+    "services/**/*.ts",
+    "pages/**/*.ts",
+    "config/**/*.ts",
+    "utils/**/*.ts",
+    "helpers/**/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "playwright-report",
+    "test-results"
+  ]
+}

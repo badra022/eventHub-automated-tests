@@ -1,0 +1,26 @@
+{
+  "prod": {
+    "account01": {
+      "email": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision",
+      "password": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision"
+    },
+    "account02": {
+      "email": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision",
+      "password": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision"
+    },
+    "account03": {
+      "email": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision",
+      "password": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision"
+    },
+    "account04": {
+      "email": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision",
+      "password": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision"
+    }
+  },
+  "local": {
+    "account01": {
+      "email": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision",
+      "password": "enc:v1:REPLACE_WITH_OUTPUT_OF_npm_run_users:provision"
+    }
+  }
+}

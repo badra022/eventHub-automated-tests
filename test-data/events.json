@@ -1,0 +1,62 @@
+{
+  "conference": {
+    "title": "QA Tech Summit",
+    "description": "Event created by the automated tests.",
+    "category": "Conference",
+    "venue": "Automation Convention Centre",
+    "city": "Bangalore",
+    "eventDate": "2027-06-15T09:00:00.000Z",
+    "price": 1500,
+    "totalSeats": 100
+  },
+  "concert": {
+    "title": "QA Live Concert",
+    "description": "Event created by the automated tests.",
+    "category": "Concert",
+    "venue": "Open Air Arena",
+    "city": "Mumbai",
+    "eventDate": "2027-08-20T18:30:00.000Z",
+    "price": 2500,
+    "totalSeats": 50
+  },
+  "decimalPriceWorkshop": {
+    "title": "QA Decimal Price Workshop",
+    "description": "Fractional price, used to check total price rounding (R1, S12).",
+    "category": "Workshop",
+    "venue": "Training Room 1",
+    "city": "Pune",
+    "eventDate": "2027-05-10T10:00:00.000Z",
+    "price": 99.99,
+    "totalSeats": 30
+  },
+  "freeWorkshop": {
+    "title": "QA Free Workshop",
+    "description": "Free event, used to check a zero total (S13).",
+    "category": "Workshop",
+    "venue": "Community Hall",
+    "city": "Chennai",
+    "eventDate": "2027-04-01T10:00:00.000Z",
+    "price": 0,
+    "totalSeats": 20
+  },
+  "lastSeats": {
+    "title": "QA Last Seats Festival",
+    "description": "Very few seats, used for seat limit and concurrency checks (S08, S34, S35).",
+    "category": "Festival",
+    "venue": "City Park",
+    "city": "Delhi",
+    "eventDate": "2027-09-05T12:00:00.000Z",
+    "price": 500,
+    "totalSeats": 2
+  },
+  "pastEvent": {
+    "title": "QA Past Event",
+    "description": "Event dated in the past (S36, needs clarification).",
+    "category": "Sports",
+    "venue": "Old Stadium",
+    "city": "Hyderabad",
+    "eventDate": "2020-01-01T10:00:00.000Z",
+    "price": 300,
+    "totalSeats": 10
+  }
+}
