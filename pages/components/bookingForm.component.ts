@@ -21,13 +21,14 @@ export class BookingForm {
 
   constructor(page: Page) {
     this.root = page.locator('form').filter({ has: page.getByRole('button', { name: 'Confirm Booking' }) });
-    this.decrementButton = this.root.getByRole('button', { name: /−|-|decrease/i });
-    this.incrementButton = this.root.getByRole('button', { name: /\+|increase/i });
-    this.quantityValue = this.root.getByTestId('ticket-count');
+    this.decrementButton = this.root.getByRole('button', { name: '−', exact: true });
+    this.incrementButton = this.root.getByRole('button', { name: '+', exact: true });
+    // The counter has no test id: it is the element between the − and + buttons
+    this.quantityValue = this.decrementButton.locator('xpath=following-sibling::*[1]');
     this.maxQuantityLabel = this.root.getByText(/\(max \d+\)/);
-    this.nameInput = this.root.getByLabel(/name/i);
-    this.emailInput = this.root.getByLabel(/email/i);
-    this.phoneInput = this.root.getByLabel(/phone/i);
+    this.nameInput = this.root.locator('#customerName');
+    this.emailInput = this.root.getByTestId('customer-email');
+    this.phoneInput = this.root.locator('#phone');
     this.confirmButton = this.root.getByRole('button', { name: 'Confirm Booking' });
   }
 

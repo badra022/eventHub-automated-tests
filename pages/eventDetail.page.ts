@@ -17,9 +17,11 @@ export class EventDetailPage {
     this.header = new Header(page);
     this.bookingForm = new BookingForm(page);
     this.confirmation = new ConfirmationPanel(page);
+    const valueOf = (label: string) => page.getByText(label, { exact: true }).locator('xpath=following-sibling::*[1]');
     this.title = page.getByRole('heading', { level: 1 });
-    this.price = page.getByTestId('event-price');
-    this.availableSeats = page.getByTestId('event-available-seats');
+    this.price = valueOf('Price per ticket');
+    // Rendered as "<available> / <total> seats"
+    this.availableSeats = valueOf('Available');
     this.soldOutMessage = page.getByText(/sold out/i);
   }
 

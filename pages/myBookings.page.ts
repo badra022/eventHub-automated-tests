@@ -8,22 +8,26 @@ export class MyBookingsPage {
   readonly confirmDialog: ConfirmDialog;
 
   private readonly heading: Locator;
+  private readonly bookingCards: Locator;
   private readonly emptyState: Locator;
-  private readonly successMessage: Locator;
+  private readonly cancelledMessage: Locator;
   private readonly clearAllButton: Locator;
 
   constructor(private readonly page: Page) {
     this.header = new Header(page);
     this.confirmDialog = new ConfirmDialog(page);
-    this.heading = page.getByRole('heading', { name: 'My Bookings' });
-    this.emptyState = page.getByText(/no bookings/i);
-    this.successMessage = page.getByRole('status').or(page.getByRole('alert'));
+    this.heading = page.getByRole('heading', { name: 'My Bookings', level: 1 });
+    this.bookingCards = page.getByTestId('booking-card');
+    this.emptyState = page.getByRole('heading', { name: 'No bookings yet' });
+    // A toast, not role=alert: Next.js keeps an empty role=alert route announcer on every page
+    this.cancelledMessage = page.getByText('Booking cancelled successfully');
     this.clearAllButton = page.getByRole('button', { name: 'Clear all bookings' });
   }
 
   getHeading(): Locator { return this.heading; }
+  getBookingCards(): Locator { return this.bookingCards; }
   getEmptyState(): Locator { return this.emptyState; }
-  getSuccessMessage(): Locator { return this.successMessage; }
+  getCancelledMessage(): Locator { return this.cancelledMessage; }
 
   booking(bookingRef: string): BookingCard {
     return new BookingCard(this.page, bookingRef);

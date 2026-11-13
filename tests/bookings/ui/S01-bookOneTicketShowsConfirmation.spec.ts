@@ -36,8 +36,8 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         const confirmation = eventPage.confirmation;
         expect(bookingRef).toMatch(BOOKING_REF_PATTERN);
         await expect(confirmation.getCustomerName()).toHaveText(customer.customerName);
-        await expect(confirmation.getTicketCount()).toContainText('1');
-        await expect(confirmation.getTotalPrice()).toContainText(formatDisplayedPrice(event.price));
+        await expect(confirmation.getTicketCount()).toHaveText('1');
+        await expect(confirmation.getTotalPrice()).toHaveText(formatDisplayedPrice(event.price));
         logger.info('Confirmation verified', { scenarioId: 'S01', bookingRef });
       });
 

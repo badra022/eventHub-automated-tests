@@ -38,7 +38,7 @@ export function buildBookingInput(eventId: number, overrides: Partial<CreateBook
   return { eventId, ...buildCustomer(), quantity: 1, ...overrides };
 }
 
-/** How the UI displays a price: USD without decimals (e.g. 1500 -> "$1,500"). */
-export function formatDisplayedPrice(amount: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+/** How the UI displays a price: USD without decimals (e.g. "1500" -> "$1,500"). */
+export function formatDisplayedPrice(amount: number | string): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(Number(amount));
 }

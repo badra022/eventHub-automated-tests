@@ -10,12 +10,12 @@ export class BookingCard {
   private readonly cancelButton: Locator;
 
   constructor(page: Page, bookingRef: string) {
-    this.root = page.getByRole('article').or(page.locator('li')).filter({ hasText: bookingRef });
+    this.root = page.getByTestId('booking-card').filter({ hasText: bookingRef });
     this.eventTitle = this.root.getByRole('heading');
-    this.ticketCount = this.root.getByTestId('booking-tickets');
-    this.totalPrice = this.root.getByTestId('booking-total');
-    this.status = this.root.getByTestId('booking-status');
-    this.cancelButton = this.root.getByRole('button', { name: /cancel/i });
+    this.ticketCount = this.root.getByText(/\d+ tickets?/);
+    this.totalPrice = this.root.getByText(/^\$[\d,.]+$/);
+    this.status = this.root.getByText(/^(confirmed|cancelled)$/);
+    this.cancelButton = this.root.getByTestId('cancel-booking-btn');
   }
 
   getRoot(): Locator { return this.root; }

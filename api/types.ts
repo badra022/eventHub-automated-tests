@@ -63,8 +63,10 @@ export interface CreateEventInput {
   imageUrl?: string;
 }
 
-export interface Event extends CreateEventInput {
+export interface Event extends Omit<CreateEventInput, 'imageUrl' | 'price'> {
   id: number;
+  /** Decimal serialised as a string, e.g. "1500" (the OpenAPI spec says number) */
+  price: string;
   availableSeats: number;
   imageUrl?: string | null;
   createdAt: string;
@@ -93,9 +95,10 @@ export interface CreateBookingInput {
 
 export interface Booking extends CreateBookingInput {
   id: number;
-  totalPrice: number;
+  /** Decimal serialised as a string, e.g. "3000" (the OpenAPI spec says number) */
+  totalPrice: string;
   status: BookingStatus;
-  /** Format EVT-XXXXXX */
+  /** e.g. `D-W6VW4J`: first letter of the event title + 6 characters (the OpenAPI spec says EVT-XXXXXX) */
   bookingRef: string;
   createdAt: string;
   updatedAt: string;

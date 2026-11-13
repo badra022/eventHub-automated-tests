@@ -12,7 +12,8 @@ export interface BookingsServiceConfig {
   token: string;
 }
 
-export const BOOKING_REF_PATTERN = /^EVT-[A-Z0-9]{6}$/;
+// The OpenAPI spec documents EVT-XXXXXX; the API returns <first letter of the event title>-XXXXXX
+export const BOOKING_REF_PATTERN = /^[A-Z0-9]-[A-Z0-9]{6}$/;
 
 /**
  * Bookings of the current user's sandbox (max 9; a 10th silently evicts the oldest).

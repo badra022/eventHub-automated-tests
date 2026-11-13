@@ -13,11 +13,12 @@
     "typecheck": "tsc --noEmit",
     "secret:encrypt": "tsx scripts/secret.ts encrypt",
     "secret:decrypt": "tsx scripts/secret.ts decrypt",
-    "users:provision": "tsx scripts/provision-users.ts"
+    "users:provision": "tsx scripts/provision-users.ts",
+    "auth:state": "tsx scripts/save-auth-state.ts"
   },
   "license": "ISC",
   "dependencies": {
-    "@faker-js/faker": "^9.9.0",
+    "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.61.1",
     "@types/node": "^26.0.1",
     "dotenv": "^17.4.2",
@@ -25,6 +26,7 @@
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "@playwright/cli": "^0.1.24",
     "tsx": "^4.20.0"
   }
 }

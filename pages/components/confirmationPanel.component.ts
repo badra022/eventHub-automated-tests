@@ -1,7 +1,9 @@
 import type { Locator, Page } from '@playwright/test';
 
+export const BOOKING_REF_IN_TEXT = /[A-Z0-9]-[A-Z0-9]{6}/;
+
+/** Replaces the booking form once a booking succeeds. Values have no test ids, so they are read next to their labels. */
 export class ConfirmationPanel {
-  private readonly root: Locator;
   private readonly heading: Locator;
   private readonly bookingRef: Locator;
   private readonly customerName: Locator;
@@ -11,27 +13,27 @@ export class ConfirmationPanel {
   private readonly browseMoreEventsLink: Locator;
 
   constructor(page: Page) {
-    this.root = page.locator('section, div').filter({ hasText: /Booking confirmed/i }).last();
-    this.heading = this.root.getByRole('heading', { name: /Booking confirmed/i });
-    this.bookingRef = this.root.getByText(/EVT-[A-Z0-9]{6}/);
-    this.customerName = this.root.getByTestId('confirmation-customer');
-    this.ticketCount = this.root.getByTestId('confirmation-tickets');
-    this.totalPrice = this.root.getByTestId('confirmation-total');
-    this.viewMyBookingsLink = this.root.getByRole('link', { name: 'View My Bookings' });
-    this.browseMoreEventsLink = this.root.getByRole('link', { name: 'Browse More Events' });
+    const valueOf = (label: string) => page.getByText(label, { exact: true }).locator('xpath=following-sibling::*[1]');
+    this.heading = page.getByRole('heading', { name: /Booking Confirmed/i });
+    this.bookingRef = valueOf('Booking Ref');
+    this.customerName = valueOf('Customer');
+    this.ticketCount = valueOf('Tickets');
+    this.totalPrice = valueOf('Total');
+    // The buttons are wrapped in links without an accessible name
+    this.viewMyBookingsLink = page.getByRole('button', { name: 'View My Bookings' });
+    this.browseMoreEventsLink = page.getByRole('button', { name: 'Browse More Events' });
   }
 
-  getRoot(): Locator { return this.root; }
   getHeading(): Locator { return this.heading; }
   getBookingRef(): Locator { return this.bookingRef; }
   getCustomerName(): Locator { return this.customerName; }
   getTicketCount(): Locator { return this.ticketCount; }
   getTotalPrice(): Locator { return this.totalPrice; }
 
-  /** Booking reference shown on the confirmation, e.g. `EVT-A1B2C3`. */
+  /** Booking reference shown on the confirmation, e.g. `D-W6VW4J`. */
   async readBookingRef(): Promise<string> {
-    const text = (await this.bookingRef.first().textContent()) ?? '';
-    const match = text.match(/EVT-[A-Z0-9]{6}/);
+    const text = (await this.bookingRef.textContent()) ?? '';
+    const match = text.match(BOOKING_REF_IN_TEXT);
     if (!match) {
       throw new Error(`No booking reference found in the confirmation text "${text}"`);
     }

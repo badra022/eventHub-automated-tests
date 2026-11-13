@@ -15,7 +15,7 @@ Playwright + TypeScript tests for the [EventHub](https://eventhub.rahulshettyaca
 | `config/env.ts` | Environment URLs and secrets (`prod`, `local`) |
 | `utils/` | Logger, navigation, polling, retry, test data registry, encryption, common helpers |
 | `test-data/` | `events.json`, `bookings.json`, `users.json` (encrypted accounts) |
-| `scripts/` | `secret.ts` (encrypt/decrypt a value), `provision-users.ts` (register the account pool) |
+| `scripts/` | `secret.ts` (encrypt/decrypt a value), `provision-users.ts` (register the account pool), `save-auth-state.ts` (UI login for playwright-cli), `cli/` (playwright-cli snippets) |
 
 ## Setup
 
@@ -36,3 +36,16 @@ npm run typecheck
 ```
 
 CI: `.github/workflows/playwright.yml`. Needs the `TEST_DATA_KEY` secret in a `prod` GitHub environment and GitHub Pages enabled (source: GitHub Actions).
+
+## Exploring the UI with playwright-cli
+
+```bash
+npm run auth:state -- account01            # logs a pool account in, saves .auth/account01.json
+npx playwright-cli open https://eventhub.rahulshettyacademy.com/login
+npx playwright-cli state-load .auth/account01.json
+npx playwright-cli goto https://eventhub.rahulshettyacademy.com/bookings
+npx playwright-cli snapshot                 # accessibility tree with element refs
+npx playwright-cli generate-locator <ref>
+npx playwright-cli run-code --filename scripts/cli/validate-selectors.js   # re-checks the page object selectors
+npx playwright-cli close
+```
