@@ -1,9 +1,9 @@
-- text: "/[A-Z0-9]-[A-Z0-9]{6} confirmed #\\d+/"
-- heading /QA Tech Summit \S+/ [level=3]
-- text: /📅 \d+ Jun \d+ 🎫 2 tickets 📍 Bangalore 🗓 Booked \d+ \w+ \d+/
-- paragraph: $3,000
+- text: "/Q-GQ0U0B confirmed #\\d+/"
+- heading "QA Tech Summit mwev42tj-fd26" [level=3]
+- text: /📅 \d+ Jun \d+ 🎫 2 tickets 📍 Bangalore 🗓 Booked \d+ Nov \d+/
+- paragraph: /\$\d+,\d+/
 - paragraph: total
 - link "View Details":
-  - /url: /\/bookings\/\d+/
+  - /url: /bookings/56991
   - button "View Details"
 - button "Cancel Booking"

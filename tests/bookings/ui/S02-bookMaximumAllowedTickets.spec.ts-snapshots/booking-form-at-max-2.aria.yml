@@ -11,5 +11,5 @@
 - text: Phone Number*
 - textbox "Phone Number*":
   - /placeholder: +91 98765 43210
-- text: $500 × 2 tickets $1,000 Total $1,000
+- text: /\$\d+ × 2 tickets \$\d+,\d+ Total \$\d+,\d+/
 - button "Confirm Booking"

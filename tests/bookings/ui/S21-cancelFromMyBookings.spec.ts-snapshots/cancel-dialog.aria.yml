@@ -2,6 +2,6 @@
   - heading "Cancel this booking?" [level=2]
   - button "Close":
     - img
-  - paragraph: /This will cancel [A-Z0-9]-[A-Z0-9]{6} and release 1 seat\(s\) back to the event\. This action cannot be undone\./
+  - paragraph: This will cancel Q-92V1LA and release 1 seat(s) back to the event. This action cannot be undone.
   - button "Cancel"
   - button "Yes, cancel it"
