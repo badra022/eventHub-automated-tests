@@ -12,23 +12,34 @@ export class EventDetailPage {
   private readonly price: Locator;
   private readonly availableSeats: Locator;
   private readonly soldOutMessage: Locator;
+  private readonly notFoundHeading: Locator;
+  private readonly notFoundBrowseLink: Locator;
 
-  constructor(page: Page) {
+  constructor(private readonly page: Page) {
     this.header = new Header(page);
     this.bookingForm = new BookingForm(page);
     this.confirmation = new ConfirmationPanel(page);
     const valueOf = (label: string) => page.getByText(label, { exact: true }).locator('xpath=following-sibling::*[1]');
     this.title = page.getByRole('heading', { level: 1 });
     this.price = valueOf('Price per ticket');
-    // Rendered as "<available> / <total> seats"
+    // Rendered as "<available> / <total> seats", or "SOLD OUT"
     this.availableSeats = valueOf('Available');
     this.soldOutMessage = page.getByText(/sold out/i);
+    this.notFoundHeading = page.getByRole('heading', { name: 'Event not found' });
+    this.notFoundBrowseLink = page.getByRole('main').getByRole('link', { name: 'Browse Events' });
   }
 
   getTitle(): Locator { return this.title; }
   getPrice(): Locator { return this.price; }
   getAvailableSeats(): Locator { return this.availableSeats; }
   getSoldOutMessage(): Locator { return this.soldOutMessage; }
+  getNotFoundHeading(): Locator { return this.notFoundHeading; }
+  getNotFoundBrowseLink(): Locator { return this.notFoundBrowseLink; }
+
+  /** Toast message shown by the page, e.g. after a failed booking ("Internal server error", "Network Error"). */
+  getToast(text: string | RegExp): Locator {
+    return this.page.getByText(text, { exact: typeof text === 'string' });
+  }
 
   /** Available seats as shown on the page ("<available> / <total> seats"). */
   async readAvailableSeats(): Promise<number> {

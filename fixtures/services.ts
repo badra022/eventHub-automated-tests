@@ -9,6 +9,8 @@ type ServiceFixtures = {
   eventsService: services.EventsService;
   bookingsService: services.BookingsService;
   healthService: services.HealthService;
+  /** Events and bookings services of the dedicated sandbox-limit account (S19 only); cleaned up like the others. */
+  sandboxLimitServices: { eventsService: services.EventsService; bookingsService: services.BookingsService };
 };
 
 /**
@@ -42,5 +44,15 @@ export const test = base.extend<ServiceFixtures>({
 
   healthService: async ({ request, envConfig }, use) => {
     await use(new services.HealthService(request, { baseUrl: envConfig.API_BASE_URL }));
+  },
+
+  sandboxLimitServices: async ({ request, envConfig, sandboxLimitUser }, use) => {
+    const config = { baseUrl: envConfig.API_BASE_URL, token: sandboxLimitUser.token };
+    const eventsService = new services.EventsService(request, config);
+    const bookingsService = new services.BookingsService(request, config);
+    logger.debug('Sandbox-limit services ready', { userId: sandboxLimitUser.id, token: sandboxLimitUser.token });
+    await use({ eventsService, bookingsService });
+    await bookingsService.cleanup();
+    await eventsService.cleanup();
   },
 });

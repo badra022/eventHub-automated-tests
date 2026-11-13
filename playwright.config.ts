@@ -56,23 +56,26 @@ export default defineConfig<TestOptions>({
       testMatch: UI_SPECS,
       use: { ...devices['Desktop Chrome'] },
     },
-    // Visual baselines are kept for desktop Chromium only; the other projects still run every functional assertion
+    // S41: the cross-browser projects run the journeys tagged @cross-browser (S01, S16, S21); visual baselines are
+    // kept for desktop Chromium only, the other projects still run every functional assertion
     {
       name: 'firefox',
       testMatch: UI_SPECS,
+      grep: /@cross-browser/,
       ignoreSnapshots: true,
       use: { ...devices['Desktop Firefox'] },
     },
     {
       name: 'webkit',
       testMatch: UI_SPECS,
+      grep: /@cross-browser/,
       ignoreSnapshots: true,
       use: { ...devices['Desktop Safari'] },
     },
     {
       name: 'mobile-chrome',
       testMatch: UI_SPECS,
-      grep: /@smoke/,
+      grep: /@cross-browser/,
       ignoreSnapshots: true,
       use: { ...devices['Pixel 7'] },
     },

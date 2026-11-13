@@ -1,0 +1,15 @@
+- text: Tickets
+- button "−" [disabled]
+- text: "1"
+- button "+" [disabled]
+- text: (max 0) Full Name*
+- textbox "Full Name*":
+  - /placeholder: Your full name
+- text: Email*
+- textbox "Email*":
+  - /placeholder: you@email.com
+- text: Phone Number*
+- textbox "Phone Number*":
+  - /placeholder: +91 98765 43210
+- text: $500 × 1 ticket $500 Total $500
+- button "Sold Out" [disabled]

@@ -18,9 +18,11 @@ export class BookingForm {
   private readonly emailInput: Locator;
   private readonly phoneInput: Locator;
   private readonly confirmButton: Locator;
+  private readonly soldOutButton: Locator;
 
   constructor(page: Page) {
-    this.root = page.locator('form').filter({ has: page.getByRole('button', { name: 'Confirm Booking' }) });
+    // Matched by the name input: a sold-out form has no Confirm Booking button
+    this.root = page.locator('form').filter({ has: page.locator('#customerName') });
     this.decrementButton = this.root.getByRole('button', { name: '−', exact: true });
     this.incrementButton = this.root.getByRole('button', { name: '+', exact: true });
     // The counter has no test id: it is the element between the − and + buttons
@@ -30,6 +32,7 @@ export class BookingForm {
     this.emailInput = this.root.getByTestId('customer-email');
     this.phoneInput = this.root.locator('#phone');
     this.confirmButton = this.root.getByRole('button', { name: 'Confirm Booking' });
+    this.soldOutButton = this.root.getByRole('button', { name: 'Sold Out' });
   }
 
   getRoot(): Locator { return this.root; }
@@ -38,6 +41,10 @@ export class BookingForm {
   getQuantityValue(): Locator { return this.quantityValue; }
   getMaxQuantityLabel(): Locator { return this.maxQuantityLabel; }
   getConfirmButton(): Locator { return this.confirmButton; }
+  getSoldOutButton(): Locator { return this.soldOutButton; }
+  getNameInput(): Locator { return this.nameInput; }
+  /** Price summary line, e.g. "$1,500 × 3 tickets" */
+  getSummaryLine(): Locator { return this.root.getByText(/ × \d+ tickets?$/); }
 
   /** Validation message rendered right after a field. */
   getFieldError(field: BookingField): Locator {
@@ -73,6 +80,6 @@ export class BookingForm {
   }
 
   async waitForLoaded(): Promise<void> {
-    await this.confirmButton.waitFor({ state: 'visible' });
+    await this.nameInput.waitFor({ state: 'visible' });
   }
 }

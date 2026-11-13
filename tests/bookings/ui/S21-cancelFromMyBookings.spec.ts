@@ -10,9 +10,10 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
   test(
     'S21 - cancelling from My Bookings asks for confirmation, shows a success message and removes the booking',
     {
-      tag: ['@bookings', '@ui', '@critical', '@smoke', '@visual'],
+      tag: ['@bookings', '@ui', '@critical', '@smoke', '@visual', '@cross-browser'],
       annotation: [
         { type: 'scenarioId', description: 'S21' },
+        { type: 'alsoCovers', description: 'S41 (runs on Firefox, WebKit and a mobile viewport)' },
         { type: 'story', description: 'US-114' },
         { type: 'acceptanceCriteria', description: 'AC4' },
         { type: 'risk', description: 'R5' },

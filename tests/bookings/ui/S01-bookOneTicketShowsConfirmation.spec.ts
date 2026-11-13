@@ -13,9 +13,10 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
   test(
     'S01 - booking 1 ticket shows a confirmation with the reference, customer, tickets and total',
     {
-      tag: ['@bookings', '@ui', '@critical', '@smoke'],
+      tag: ['@bookings', '@ui', '@critical', '@smoke', '@cross-browser'],
       annotation: [
         { type: 'scenarioId', description: 'S01' },
+        { type: 'alsoCovers', description: 'S41 (runs on Firefox, WebKit and a mobile viewport)' },
         { type: 'story', description: 'US-114' },
         { type: 'acceptanceCriteria', description: 'AC1' },
         { type: 'risk', description: 'R12' },

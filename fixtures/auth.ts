@@ -35,6 +35,11 @@ type AuthWorkerFixtures = {
   otherUser: AuthenticatedUser;
   /** Storage state file of `otherUser` logged in through the UI. */
   otherUserStorageStatePath: string;
+  /**
+   * Dedicated account for the sandbox-limit scenario (S19), which needs more than the 8 bookings a worker account
+   * may hold. Only S19 uses it, so pool accounts are never pushed into eviction.
+   */
+  sandboxLimitUser: AuthenticatedUser;
 };
 
 function toCredentials(record: Record<string, unknown>, key: string): UserCredentials {
@@ -162,6 +167,15 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
       const filePath = path.join(AUTH_STATE_DIR, `${workerInfo.project.name}-worker-${workerInfo.parallelIndex}-userB.json`);
       await loginThroughUi(browser, envConfig, otherUser, filePath);
       await use(filePath);
+    },
+    { scope: 'worker' },
+  ],
+
+  sandboxLimitUser: [
+    async ({ appEnv, envConfig, playwright }, use) => {
+      const user = await loginThroughApi(playwright, envConfig, readAccount('otherUsers', 'sandboxLimitUser', envConfig, appEnv));
+      logger.info('Got an API token for the sandbox-limit account', { userId: user.id });
+      await use(user);
     },
     { scope: 'worker' },
   ],
