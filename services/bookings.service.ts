@@ -34,26 +34,33 @@ export class BookingsService {
     if (response.ok()) {
       this.track(((await response.json()) as ApiSuccess<Booking>).data.id);
     }
-    logger.info('POST booking', { status: response.status() });
+    logger.info('Sent create booking request', { status: response.status() });
     return response;
   }
 
   /** GET /bookings/{id} without asserting the status. */
   async fetchBooking(id: number | string, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.get(id, options);
+    const response = await this.client.get(id, options);
+    logger.info('Sent GET booking', { bookingId: id, status: response.status() });
+    return response;
   }
 
   /** GET /bookings/ref/{ref} without asserting the status. */
   async fetchBookingByRef(ref: string, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.getByRef(ref, options);
+    const response = await this.client.getByRef(ref, options);
+    logger.info('Sent GET booking by reference', { bookingRef: ref, status: response.status() });
+    return response;
   }
 
   /** DELETE /bookings/{id} without asserting the status. */
   async requestCancel(id: number | string, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.cancel(id, options);
+    const response = await this.client.cancel(id, options);
+    logger.info('Sent cancel booking request', { bookingId: id, status: response.status() });
+    return response;
   }
 
   async createBooking(input: CreateBookingInput): Promise<Booking> {
+    logger.debug('Creating booking', { input });
     const { data: booking } = await parseOk<ApiSuccess<Booking>>(await this.client.create(input), 'Create booking');
     this.track(booking.id);
     logger.info('Created booking', {
@@ -63,19 +70,28 @@ export class BookingsService {
       quantity: booking.quantity,
       totalPrice: booking.totalPrice,
     });
+    logger.debug('Created booking details', { booking });
     return booking;
   }
 
   async getBooking(id: number): Promise<Booking> {
-    return (await parseOk<ApiSuccess<Booking>>(await this.client.get(id), `Get booking ${id}`)).data;
+    const { data: booking } = await parseOk<ApiSuccess<Booking>>(await this.client.get(id), `Get booking ${id}`);
+    logger.debug('Fetched booking', { booking });
+    return booking;
   }
 
   async getBookingByRef(ref: string): Promise<Booking> {
-    return (await parseOk<ApiSuccess<Booking>>(await this.client.getByRef(ref), `Get booking ${ref}`)).data;
+    const { data: booking } = await parseOk<ApiSuccess<Booking>>(await this.client.getByRef(ref), `Get booking ${ref}`);
+    logger.info('Found booking by reference', { bookingRef: ref, bookingId: booking.id, status: booking.status });
+    logger.debug('Fetched booking', { booking });
+    return booking;
   }
 
   async listBookings(query: ListBookingsQuery = {}): Promise<Paginated<Booking>> {
-    return parseOk<Paginated<Booking>>(await this.client.list(query), 'List bookings');
+    const page = await parseOk<Paginated<Booking>>(await this.client.list(query), 'List bookings');
+    logger.info('Listed bookings', { query, returned: page.data.length, pagination: page.pagination });
+    logger.debug('Listed booking refs', { refs: page.data.map((booking) => booking.bookingRef) });
+    return page;
   }
 
   async cancelBooking(id: number): Promise<void> {
@@ -87,17 +103,24 @@ export class BookingsService {
   /** Registers a booking created outside this service (e.g. through the UI) for cleanup. */
   track(id: number): void {
     this.createdBookingIds.add(id);
+    logger.debug('Tracking booking for cleanup', { bookingId: id, tracked: this.createdBookingIds.size });
   }
 
   /** Cancels every tracked booking; bookings already gone (404, e.g. cascaded by an event delete) are ignored. */
   async cleanup(): Promise<void> {
-    for (const id of [...this.createdBookingIds]) {
+    if (this.createdBookingIds.size === 0) return;
+    const ids = [...this.createdBookingIds];
+    for (const id of ids) {
       const response = await this.client.cancel(id);
       if (!response.ok() && response.status() !== 404) {
-        logger.warn('Could not cancel booking during cleanup', { bookingId: id, status: response.status() });
+        logger.warn('Could not cancel booking during cleanup; it counts towards the 9-booking sandbox limit', {
+          bookingId: id,
+          status: response.status(),
+        });
         continue;
       }
       this.createdBookingIds.delete(id);
     }
+    logger.info('Cleaned up bookings', { cancelled: ids.length - this.createdBookingIds.size, left: [...this.createdBookingIds] });
   }
 }

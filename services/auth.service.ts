@@ -21,26 +21,35 @@ export class AuthService {
 
   /** POST /auth/login without asserting the status (negative tests read status and body themselves). */
   async requestLogin(credentials: UserCredentials | Record<string, unknown>): Promise<APIResponse> {
-    return this.client.login(credentials);
+    const response = await this.client.login(credentials);
+    logger.info('Sent login request', { status: response.status() });
+    return response;
   }
 
   /** POST /auth/register without asserting the status. */
   async requestRegister(credentials: UserCredentials | Record<string, unknown>): Promise<APIResponse> {
-    return this.client.register(credentials);
+    const response = await this.client.register(credentials);
+    logger.info('Sent register request', { status: response.status() });
+    return response;
   }
 
   /** GET /auth/me without asserting the status; `token: null` sends no Authorization header. */
   async requestMe(options?: RequestOptions): Promise<APIResponse> {
-    return this.client.me(options);
+    const response = await this.client.me(options);
+    logger.info('Sent GET /auth/me', { status: response.status(), withToken: options?.token !== null });
+    return response;
   }
 
   async login(credentials: UserCredentials): Promise<AuthResponse> {
+    logger.debug('Logging in', { email: credentials.email });
     const body = await parseOk<AuthResponse>(await this.client.login(credentials), 'Login');
     logger.info('Logged in', { userId: body.user.id });
+    logger.debug('Login response', { user: body.user, token: body.token });
     return body;
   }
 
   async register(credentials: UserCredentials): Promise<AuthResponse> {
+    logger.debug('Registering account', { email: credentials.email });
     const body = await parseOk<AuthResponse>(await this.client.register(credentials), 'Register');
     logger.info('Registered account', { userId: body.user.id });
     return body;
@@ -50,13 +59,17 @@ export class AuthService {
   async loginOrRegister(credentials: UserCredentials): Promise<AuthResponse> {
     const response = await this.client.login(credentials);
     if (response.status() === 404) {
-      logger.info('Account not registered yet, registering it');
+      logger.warn('Account is not registered (login returned 404), registering it now', { email: credentials.email });
       return this.register(credentials);
     }
-    return parseOk<AuthResponse>(response, 'Login');
+    const body = await parseOk<AuthResponse>(response, 'Login');
+    logger.info('Logged in', { userId: body.user.id });
+    return body;
   }
 
   async me(token: string): Promise<MeResponse> {
-    return parseOk<MeResponse>(await this.client.me({ token }), 'GET /auth/me');
+    const body = await parseOk<MeResponse>(await this.client.me({ token }), 'GET /auth/me');
+    logger.debug('Token identity', { user: body.user });
+    return body;
   }
 }

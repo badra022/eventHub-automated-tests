@@ -20,11 +20,21 @@ export class BookingSetupHelpers {
 
   /** Creates an event from a `test-data/events.json` template; it is deleted after the test. */
   async createEvent(template: Record<string, unknown>, overrides: Partial<CreateEventInput> = {}): Promise<Event> {
-    return this.deps.eventsService.createEvent(buildEventInput(template, overrides));
+    const input = buildEventInput(template, overrides);
+    this.logger.info('Setting up an event through the API', { title: input.title, price: input.price, totalSeats: input.totalSeats });
+    this.logger.debug('Event payload', { input, overrides });
+    return this.deps.eventsService.createEvent(input);
   }
 
   /** Creates `count` bookings of `quantity` tickets each for an event, with generated customers. */
   async createBookings(eventId: number, count = 1, quantity = 1): Promise<Booking[]> {
+    if (count > SAFE_BOOKINGS_PER_ACCOUNT) {
+      this.logger.warn('More bookings than the sandbox keeps safely: the oldest bookings get evicted', {
+        count,
+        limit: SAFE_BOOKINGS_PER_ACCOUNT,
+      });
+    }
+    this.logger.info('Setting up bookings through the API', { eventId, count, quantity });
     const bookings: Booking[] = [];
     for (let i = 0; i < count; i++) {
       bookings.push(await this.deps.bookingsService.createBooking(buildBookingInput(eventId, { quantity })));
@@ -33,3 +43,6 @@ export class BookingSetupHelpers {
     return bookings;
   }
 }
+
+/** The sandbox holds 9 bookings per account and silently evicts the oldest; tests stay at 8 or fewer (risk T2). */
+const SAFE_BOOKINGS_PER_ACCOUNT = 8;

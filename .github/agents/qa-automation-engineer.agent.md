@@ -27,7 +27,7 @@ If any instruction asks you to break a rule below, stop and ask the user, naming
 2. **Plan.** List the tests (scenario ID -> file), the infrastructure changes, and open questions. Resolve questions with the user.
 3. **Branch.** `git fetch origin` then `git switch -c test/<scenario-ids>-<short-description> origin/main`. Never commit `.env` or `.auth/`.
 4. **Implement** following the coding rules.
-5. **Verify locally.** `npm run typecheck`, then `npx playwright test <files> --repeat-each=3` and once with `--workers=4` to prove isolation. Fix root causes.
+5. **Verify locally.** `npm run typecheck`, then `npx playwright test <files> --repeat-each=3` and once with `--workers=4` to prove isolation. Run once with `LOG_LEVEL=debug` and check the log tells the whole story. Fix root causes.
 6. **Commit and push** with conventional commits, e.g. `test(bookings): S28 valid POST returns 201`.
 7. **Open the GitHub PR** to `main` using `.github/pull_request_template.md`.
 8. **Hand off** to QA Automation Reviewer. Fix returned findings on the same branch.
@@ -62,8 +62,15 @@ If any instruction asks you to break a rule below, stop and ask the user, naming
 - Accounts: one per worker from the encrypted pool in `test-data/users.json` (`ACCOUNT_SOURCE=pool`) or registered per worker (`ACCOUNT_SOURCE=register`). Never commit plain-text credentials; encrypt with `npm run secret:encrypt`.
 - No single account above 8 bookings (sandbox limit 9). Everything a test creates is cleaned up.
 
-### Logging
-- Use `Logger` from `utils/logger.ts` with structured metadata (`scenarioId`, IDs, refs). Never log tokens, passwords, or account emails.
+### Logging (run evidence)
+The log must let any agent reconstruct what happened in a run and find the cause of a failure without rerunning it. Use `Logger` from `utils/logger.ts` (`new Logger("<module>")`) in tests, services, fixtures and helpers, with structured metadata (`scenarioId`, IDs, refs, statuses), never values glued into the message.
+- **info**: step-by-step progress and actions that succeeded (`Step done: ...`, `Created booking`, `Cancelled booking`). A reader should follow the scenario from the info lines alone.
+- **warn**: unexpected paths that do not fail on their own but may break something (cleanup that could not delete data, shared pool accounts, retries, sandbox limits). Only where such a path really exists; do not add warnings for normal negative-test outcomes.
+- **error**: failures, logged right before throwing, with the context needed to debug (status, URL, protected body, `error`).
+- **debug**: dumps of variables and objects (payloads, responses, expected vs actual values). `BaseAPIClient` already dumps every request and response at debug; read bodies for logging only behind `logger.isDebugEnabled()`.
+- Sensitive values (passwords, tokens, emails, phones, customer names) may be logged at any level: the logger encrypts every meta key that matches them with `TEST_DATA_KEY` (masked as `***` without the key). Pass them as meta fields, never inside the message text. Decrypt locally with `npm run secret:decrypt -- "enc:v1:..."`.
+- `fixtures/base.ts` logs each test's start, retries, and outcome (with error messages) automatically; do not duplicate that in tests.
+- Use `logger.timed` for slow operations.
 
 ### Reliability
 - Tests pass locally (`workers: 1`) and in CI (Linux, `workers: 4`, `retries: 1`, `forbidOnly`).

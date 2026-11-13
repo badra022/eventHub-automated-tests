@@ -1,5 +1,8 @@
 import { test as base } from './auth';
 import * as services from '../services';
+import { Logger } from '../utils/logger';
+
+const logger = new Logger('Services fixture');
 
 type ServiceFixtures = {
   authService: services.AuthService;
@@ -22,6 +25,7 @@ export const test = base.extend<ServiceFixtures>({
       baseUrl: envConfig.API_BASE_URL,
       token: authUser.token,
     });
+    logger.debug('EventsService ready', { apiBaseUrl: envConfig.API_BASE_URL, userId: authUser.id, token: authUser.token });
     await use(eventsService);
     await eventsService.cleanup();
   },
@@ -31,6 +35,7 @@ export const test = base.extend<ServiceFixtures>({
       baseUrl: envConfig.API_BASE_URL,
       token: authUser.token,
     });
+    logger.debug('BookingsService ready', { apiBaseUrl: envConfig.API_BASE_URL, userId: authUser.id, token: authUser.token });
     await use(bookingsService);
     await bookingsService.cleanup();
   },

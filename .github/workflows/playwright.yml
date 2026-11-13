@@ -23,6 +23,11 @@ on:
         description: Tag or title filter, e.g. @smoke or @regression (empty = everything)
         type: string
         default: ''
+      log_level:
+        description: Log level (debug dumps requests, responses and payloads; sensitive values stay encrypted)
+        type: choice
+        options: [error, warn, info, debug]
+        default: info
   # Called by the app repository after each deploy: runs the smoke suite
   repository_dispatch:
     types: [app-deployed]
@@ -38,7 +43,7 @@ env:
   CI: true
   APP_ENV: ${{ inputs.app_env || 'prod' }}
   ACCOUNT_SOURCE: ${{ vars.ACCOUNT_SOURCE || 'pool' }}
-  LOG_LEVEL: ${{ vars.LOG_LEVEL || 'info' }}
+  LOG_LEVEL: ${{ inputs.log_level || vars.LOG_LEVEL || 'info' }}
 
 jobs:
   typecheck:

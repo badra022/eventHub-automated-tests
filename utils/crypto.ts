@@ -24,8 +24,26 @@ export function isEncrypted(value: unknown): value is string {
 
 export function encrypt(plainText: string, passphrase: string): string {
   const salt = randomBytes(SALT_LENGTH);
+  return seal(plainText, deriveKey(passphrase, salt), salt);
+}
+
+/** Encrypts many values with one derived key (scrypt is slow), e.g. sensitive fields in logs. Output works with decrypt(). */
+export class Encryptor {
+  private readonly salt = randomBytes(SALT_LENGTH);
+  private readonly key: Buffer;
+
+  constructor(passphrase: string) {
+    this.key = deriveKey(passphrase, this.salt);
+  }
+
+  encrypt(plainText: string): string {
+    return seal(plainText, this.key, this.salt);
+  }
+}
+
+function seal(plainText: string, key: Buffer, salt: Buffer): string {
   const iv = randomBytes(IV_LENGTH);
-  const cipher = createCipheriv(ALGORITHM, deriveKey(passphrase, salt), iv);
+  const cipher = createCipheriv(ALGORITHM, key, iv);
   const cipherText = Buffer.concat([cipher.update(plainText, 'utf8'), cipher.final()]);
   return PREFIX + [salt, iv, cipher.getAuthTag(), cipherText].map((part) => part.toString('base64url')).join(':');
 }

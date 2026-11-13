@@ -34,6 +34,11 @@ export const test = base.extend<DataFixtures & DataOptions>({
   testData: [undefined, { option: true }],
 
   data: async ({ appEnv, testData }, use) => {
-    await use(resolveTestData(testData, appEnv));
+    const data = resolveTestData(testData, appEnv);
+    if (testData) {
+      logger.info('Resolved test data', { keys: testData });
+      logger.debug('Test data values', { data });
+    }
+    await use(data);
   },
 });

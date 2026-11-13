@@ -51,17 +51,41 @@ export abstract class BaseAPIClient {
     }
 
     const started = performance.now();
-    const response = await this.request.fetch(`${this.baseUrl}${path}`, {
-      method,
-      headers,
-      params: options.params,
-      ...(data === undefined ? {} : { data }),
-    });
-    this.logger.debug(`${method} ${path} -> ${response.status()}`, {
-      durationMs: Math.round(performance.now() - started),
-      authenticated: !!token,
-    });
+    let response: APIResponse;
+    try {
+      response = await this.request.fetch(`${this.baseUrl}${path}`, {
+        method,
+        headers,
+        params: options.params,
+        ...(data === undefined ? {} : { data }),
+      });
+    } catch (error) {
+      this.logger.error(`${method} ${path} failed before a response was received`, { params: options.params, error });
+      throw error;
+    }
+
+    const durationMs = Math.round(performance.now() - started);
+    if (this.logger.isDebugEnabled()) {
+      this.logger.debug(`${method} ${path} -> ${response.status()}`, {
+        durationMs,
+        authenticated: !!token,
+        params: options.params,
+        requestBody: data,
+        responseBody: await readBody(response),
+      });
+    }
     return response;
+  }
+}
+
+const MAX_LOGGED_TEXT = 4_000;
+
+async function readBody(response: APIResponse): Promise<unknown> {
+  const text = await response.text().catch(() => '');
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text.length > MAX_LOGGED_TEXT ? `${text.slice(0, MAX_LOGGED_TEXT)}... (${text.length} chars)` : text;
   }
 }
 

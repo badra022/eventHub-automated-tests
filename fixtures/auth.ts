@@ -48,12 +48,14 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
         await new AuthService(context, { baseUrl: envConfig.API_BASE_URL }).register(credentials);
         await context.dispose();
         logger.info('Registered a new account for this worker', { worker: workerInfo.parallelIndex });
+        logger.debug('Worker account', { email: credentials.email, password: credentials.password });
         await use(credentials);
         return;
       }
 
       const keys = testDataRegistry.keys('users', appEnv);
       if (keys.length === 0) {
+        logger.error('No pool accounts for this environment in test-data/users.json', { appEnv });
         throw new Error(`No accounts for "${appEnv}" in test-data/users.json. Run "npm run users:provision".`);
       }
       if (workerInfo.parallelIndex >= keys.length) {
@@ -64,9 +66,16 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
       }
 
       const key = keys[workerInfo.parallelIndex % keys.length];
-      const record = decryptRecord(testDataRegistry.resolve('users', key, appEnv), envConfig.TEST_DATA_KEY);
+      let credentials: UserCredentials;
+      try {
+        credentials = toCredentials(decryptRecord(testDataRegistry.resolve('users', key, appEnv), envConfig.TEST_DATA_KEY), key);
+      } catch (error) {
+        logger.error('Could not read the pool account', { account: key, error });
+        throw error;
+      }
       logger.info('Using pool account', { account: key, worker: workerInfo.parallelIndex });
-      await use(toCredentials(record, key));
+      logger.debug('Worker account', { email: credentials.email, password: credentials.password });
+      await use(credentials);
     },
     { scope: 'worker' },
   ],
@@ -76,6 +85,7 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
       const context = await playwright.request.newContext();
       const { token, user } = await new AuthService(context, { baseUrl: envConfig.API_BASE_URL }).login(account);
       await context.dispose();
+      logger.info('Got an API token for the worker account', { userId: user.id });
       await use({ ...account, id: user.id, token });
     },
     { scope: 'worker' },
@@ -87,14 +97,21 @@ export const test = base.extend<{}, AuthWorkerFixtures>({
       const done = logger.timed('Logged in through the UI');
 
       const page = await browser.newPage();
-      const loginPage = new LoginPage(page);
-      await new Navigation(page, { appBaseUrl: envConfig.APP_BASE_URL }).toLoginPage();
-      await loginPage.login(account.email, account.password);
-      await loginPage.waitForLoggedIn();
-      await page.context().storageState({ path: filePath });
-      await page.close();
+      try {
+        const loginPage = new LoginPage(page);
+        await new Navigation(page, { appBaseUrl: envConfig.APP_BASE_URL }).toLoginPage();
+        await loginPage.login(account.email, account.password);
+        await loginPage.waitForLoggedIn();
+        await page.context().storageState({ path: filePath });
+      } catch (error) {
+        logger.error('UI login failed', { url: page.url(), email: account.email, error });
+        throw error;
+      } finally {
+        await page.close();
+      }
 
       done();
+      logger.debug('Saved UI session', { filePath });
       await use(filePath);
     },
     { scope: 'worker' },

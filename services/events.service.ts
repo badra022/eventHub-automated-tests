@@ -30,33 +30,43 @@ export class EventsService {
     if (response.ok()) {
       this.track(((await response.json()) as ApiSuccess<Event>).data.id);
     }
+    logger.info('Sent create event request', { status: response.status() });
     return response;
   }
 
   /** GET /events/{id} without asserting the status. */
   async fetchEvent(id: number | string, options?: RequestOptions): Promise<APIResponse> {
-    return this.client.get(id, options);
+    const response = await this.client.get(id, options);
+    logger.info('Sent GET event', { eventId: id, status: response.status() });
+    return response;
   }
 
   async createEvent(input: CreateEventInput): Promise<Event> {
+    logger.debug('Creating event', { input });
     const { data: event } = await parseOk<ApiSuccess<Event>>(await this.client.create(input), 'Create event');
     this.track(event.id);
     logger.info('Created event', { eventId: event.id, title: event.title, price: event.price, totalSeats: event.totalSeats });
+    logger.debug('Created event details', { event });
     return event;
   }
 
   async getEvent(id: number): Promise<Event> {
-    return (await parseOk<ApiSuccess<Event>>(await this.client.get(id), `Get event ${id}`)).data;
+    const { data: event } = await parseOk<ApiSuccess<Event>>(await this.client.get(id), `Get event ${id}`);
+    logger.debug('Fetched event', { event });
+    return event;
   }
 
   async getAvailableSeats(id: number): Promise<number> {
     const { availableSeats } = await this.getEvent(id);
-    logger.debug('Available seats', { eventId: id, availableSeats });
+    logger.info('Read available seats', { eventId: id, availableSeats });
     return availableSeats;
   }
 
   async listEvents(query: ListEventsQuery = {}): Promise<Paginated<Event>> {
-    return parseOk<Paginated<Event>>(await this.client.list(query), 'List events');
+    const page = await parseOk<Paginated<Event>>(await this.client.list(query), 'List events');
+    logger.info('Listed events', { query, returned: page.data.length, pagination: page.pagination });
+    logger.debug('Listed event ids', { ids: page.data.map((event) => event.id) });
+    return page;
   }
 
   async deleteEvent(id: number): Promise<void> {
@@ -67,14 +77,20 @@ export class EventsService {
 
   /** Deletes every event this service created; events already gone (404) are ignored. */
   async cleanup(): Promise<void> {
-    for (const id of [...this.createdEventIds]) {
+    if (this.createdEventIds.size === 0) return;
+    const ids = [...this.createdEventIds];
+    for (const id of ids) {
       const response = await this.client.delete(id);
       if (!response.ok() && response.status() !== 404) {
-        logger.warn('Could not delete event during cleanup', { eventId: id, status: response.status() });
+        logger.warn('Could not delete event during cleanup; it stays in the sandbox (limit 6 custom events)', {
+          eventId: id,
+          status: response.status(),
+        });
         continue;
       }
       this.createdEventIds.delete(id);
     }
+    logger.info('Cleaned up events', { deleted: ids.length - this.createdEventIds.size, left: [...this.createdEventIds] });
   }
 
   private track(id: number): void {

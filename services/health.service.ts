@@ -21,24 +21,32 @@ export class HealthService {
   async waitUntilHealthy(timeout = 30_000): Promise<HealthResponse> {
     const done = logger.timed('API is healthy');
     let lastState = 'no response';
+    let attempt = 0;
     try {
       const health = await pollUntil(
         async () => {
+          attempt++;
           try {
             const response = await this.client.health();
             const body = response.ok() ? ((await response.json()) as HealthResponse) : null;
             lastState = `${response.status()} ${JSON.stringify(body)}`;
+            logger.debug('Health check attempt', { attempt, status: response.status(), body });
             return body?.status === 'ok' ? body : null;
           } catch (error) {
             lastState = error instanceof Error ? error.message : String(error);
+            logger.debug('Health check attempt failed', { attempt, error });
             return null;
           }
         },
         { timeout, delay: 3_000 },
       );
+      if (attempt > 1) {
+        logger.warn('API became healthy only after retries', { attempts: attempt });
+      }
       done();
       return health;
     } catch {
+      logger.error('API is not healthy; the run cannot start', { timeout, attempts: attempt, lastState });
       throw new Error(`API was not healthy within ${timeout}ms (last: ${lastState})`);
     }
   }
