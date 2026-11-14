@@ -65,7 +65,8 @@ If any instruction asks you to break a rule below, stop and ask the user, naming
 - Static data in `test-data/*.json`, resolved through `test.use({ testData: { events: 'conference' } })` and the `data` fixture. Generated data through `helpers/<feature>/testData.helpers.ts`.
 - Each test creates the event it books against. Never depend on seeded or shared events.
 - Accounts: one per worker from the encrypted pool in `test-data/users.json` (`ACCOUNT_SOURCE=pool`) or registered per worker (`ACCOUNT_SOURCE=register`). CI shards take separate blocks of the pool (`SHARD_INDEX`), so the pool needs shards x workers accounts (16 today). Never commit plain-text credentials; encrypt with `npm run secret:encrypt`.
-- Isolation and authorisation tests use `otherUser` / `otherUserStorageStatePath` (user B, `test-data/otherUsers.json`). User B is shared by all workers: only read with it or attempt forbidden actions, never create data in its sandbox.
+- Isolation and authorisation tests use `otherUser` (API) / `storageStateFor('userB')` (an extra browser context) for user B (`test-data/otherUsers.json`). User B is shared by all workers: only read with it or attempt forbidden actions, never create data in its sandbox.
+- Pages start logged in as the worker account. Pick another account with `test.use({ user: 'userB' })`, or a guest with `test.use({ user: null })`. Sessions are created in `.auth/` only when a test needs them and reused while fresh; never log in from global setup.
 - What "cancelled" means lives in one place: `helpers/bookings/cancellation.helpers.ts` (gap G5).
 - No single account above 8 bookings (sandbox limit 9). Everything a test creates is cleaned up.
 
