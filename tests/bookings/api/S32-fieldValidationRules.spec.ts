@@ -1,14 +1,12 @@
 import { test, expect } from '../../../fixtures/api';
 import { ValidationErrorResponseSchema } from '../../../assertions';
-import { FIELD_RULE_CASES, buildBookingInput, layersDisagree, toOverride } from '../../../helpers/bookings';
+import { FIELD_RULE_CASES, layersDisagree, toOverride } from '../../../helpers/bookings';
 import type { ValidationErrorResponse } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const rule of FIELD_RULE_CASES) {
     const { label, field, apiStatus, clarification } = rule;
     test(
@@ -24,13 +22,13 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
           ...(clarification ? [{ type: 'clarification', description: clarification }] : []),
         ],
       },
-      async ({ bookingSetup, bookingsService, data }) => {
+      async ({ bookingSetup, bookingsService, dataFactory }) => {
         const event = await test.step('create an event (API)', async () => {
-          return bookingSetup.createEvent(data.events);
+          return bookingSetup.createEvent(dataFactory.event());
         });
 
         const response = await test.step(`POST /bookings with ${label}`, async () => {
-          const payload = buildBookingInput(event.id, toOverride(rule));
+          const payload = dataFactory.booking(event.id, toOverride(rule));
           logger.debug('Payload', { payload });
           return bookingsService.requestBooking(payload);
         });

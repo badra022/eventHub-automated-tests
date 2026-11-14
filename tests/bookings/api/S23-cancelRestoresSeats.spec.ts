@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S23 - cancelling a booking gives its seats back to the event',
     {
@@ -18,11 +16,11 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         { type: 'risk', description: 'R2' },
       ],
     },
-    async ({ bookingSetup, bookingsService, eventsService, data }) => {
+    async ({ bookingSetup, bookingsService, eventsService, dataFactory }) => {
       const quantity = 3;
 
       const event = await test.step('create an event (API)', async () => {
-        return bookingSetup.createEvent(data.events);
+        return bookingSetup.createEvent(dataFactory.event());
       });
 
       const booking = await test.step(`book ${quantity} tickets; seats drop by ${quantity}`, async () => {

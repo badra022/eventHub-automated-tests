@@ -1,5 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
-import { buildBookingInput, calculateExpectedTotal } from '../../../helpers/bookings';
+import { calculateExpectedTotal } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
@@ -7,8 +7,6 @@ const logger = new Logger('Test');
 const QUANTITIES = [1, 2, 5, 10];
 
 test.describe('US-114 AC2 - Total price is ticket price × number of tickets', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const quantity of QUANTITIES) {
     test(
       `S11 - total is price × quantity for ${quantity} ticket(s)`,
@@ -21,15 +19,15 @@ test.describe('US-114 AC2 - Total price is ticket price × number of tickets', (
           { type: 'risk', description: 'R1' },
         ],
       },
-      async ({ bookingSetup, bookingsService, data }) => {
+      async ({ bookingSetup, bookingsService, dataFactory }) => {
         const event = await test.step('create a priced event (API)', async () => {
-          const created = await bookingSetup.createEvent(data.events);
+          const created = await bookingSetup.createEvent(dataFactory.event());
           logger.info('Step done: event ready', { scenarioId: 'S11', eventId: created.id, price: created.price });
           return created;
         });
 
         const booking = await test.step(`book ${quantity} ticket(s)`, async () => {
-          const created = await bookingsService.createBooking(buildBookingInput(event.id, { quantity }));
+          const created = await bookingsService.createBooking(dataFactory.booking(event.id, { quantity }));
           logger.info('Step done: booked', { scenarioId: 'S11', bookingRef: created.bookingRef, totalPrice: created.totalPrice });
           return created;
         });

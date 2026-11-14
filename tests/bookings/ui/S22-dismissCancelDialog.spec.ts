@@ -8,8 +8,6 @@ const logger = new Logger('Test');
 const DISMISSALS: DialogDismissal[] = ['cancel button', 'close button', 'Escape key'];
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const how of DISMISSALS) {
     test(
       `S22 - closing the cancel dialog with the ${how} leaves the booking unchanged`,
@@ -22,9 +20,9 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
           { type: 'risk', description: 'R5' },
         ],
       },
-      async ({ booking, bookingsService, eventsService, data }) => {
+      async ({ booking, bookingsService, eventsService, dataFactory }) => {
         const { event, created } = await test.step('create an event and a booking of 2 tickets (API)', async () => {
-          const createdEvent = await booking.setup.createEvent(data.events);
+          const createdEvent = await booking.setup.createEvent(dataFactory.event());
           return { event: createdEvent, created: await booking.setup.createBooking(createdEvent.id, { quantity: 2 }) };
         });
         const seatsBefore = await eventsService.getAvailableSeats(event.id);

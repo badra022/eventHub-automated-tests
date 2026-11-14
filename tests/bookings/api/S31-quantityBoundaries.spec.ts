@@ -1,6 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
 import { ValidationErrorResponseSchema } from '../../../assertions';
-import { buildBookingInput } from '../../../helpers/bookings';
 import type { ValidationErrorResponse } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
@@ -25,8 +24,6 @@ const CASES: QuantityCase[] = [
 ];
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const { label, quantity, expectedStatus, defect } of CASES) {
     test(
       `S31 - quantity ${label} is ${expectedStatus === 201 ? 'accepted' : 'rejected with 400'}`,
@@ -40,13 +37,13 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
           ...(defect ? [{ type: 'exclusionReason', description: `Known defect: ${defect}` }] : []),
         ],
       },
-      async ({ bookingSetup, bookingsService, eventsService, data }) => {
+      async ({ bookingSetup, bookingsService, eventsService, dataFactory }) => {
         const event = await test.step('create an event (API)', async () => {
-          return bookingSetup.createEvent(data.events);
+          return bookingSetup.createEvent(dataFactory.event());
         });
 
         const response = await test.step(`POST /bookings with quantity ${label}`, async () => {
-          const payload = { ...buildBookingInput(event.id), quantity };
+          const payload = { ...dataFactory.booking(event.id), quantity };
           logger.debug('Payload', { payload });
           return bookingsService.requestBooking(payload);
         });

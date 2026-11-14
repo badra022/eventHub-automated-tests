@@ -1,6 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
 import { ErrorResponseSchema, ValidationErrorResponseSchema } from '../../../assertions';
-import { buildBookingInput } from '../../../helpers/bookings';
 import type { ValidationErrorResponse } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
@@ -24,9 +23,9 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'risk', description: 'R9' },
       ],
     },
-    async ({ bookingsService }) => {
+    async ({ bookingsService, dataFactory }) => {
       const unknownEventId = 999_999_999;
-      const response = await bookingsService.requestBooking(buildBookingInput(unknownEventId));
+      const response = await bookingsService.requestBooking(dataFactory.booking(unknownEventId));
       await expect(response).toHaveStatus(404);
       const body: unknown = await response.json();
       expect(body).toMatchSchema(ErrorResponseSchema);
@@ -47,8 +46,8 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
           { type: 'risk', description: 'R9' },
         ],
       },
-      async ({ bookingsService }) => {
-        const response = await bookingsService.requestBooking({ ...buildBookingInput(1), eventId });
+      async ({ bookingsService, dataFactory }) => {
+        const response = await bookingsService.requestBooking({ ...dataFactory.booking(1), eventId });
         await expect(response).toHaveStatus(400);
         const body: unknown = await response.json();
         expect(body).toMatchSchema(ValidationErrorResponseSchema);

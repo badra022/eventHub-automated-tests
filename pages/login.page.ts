@@ -17,6 +17,8 @@ export class LoginPage {
 
   getErrorMessage(): Locator { return this.errorMessage; }
 
+  getSignInButton(): Locator { return this.signInButton; }
+
   async login(email: string, password: string): Promise<void> {
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);

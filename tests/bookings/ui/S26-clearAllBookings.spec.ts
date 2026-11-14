@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S26 - "Clear all bookings" asks for confirmation, removes every booking and restores the seats of each event',
     {
@@ -19,10 +17,10 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         { type: 'note', description: 'The confirmation is a native browser confirm(), unlike the in-page dialog of a single cancel' },
       ],
     },
-    async ({ booking, bookingsService, eventsService, data }) => {
+    async ({ booking, bookingsService, eventsService, dataFactory }) => {
       const { eventA, eventB, bookings } = await test.step('two events: 2 tickets on A, 1 + 3 tickets on B (API)', async () => {
-        const a = await booking.setup.createEvent(data.events);
-        const b = await booking.setup.createEvent(data.events);
+        const a = await booking.setup.createEvent(dataFactory.event());
+        const b = await booking.setup.createEvent(dataFactory.event());
         const created = [
           await booking.setup.createBooking(a.id, { quantity: 2 }),
           await booking.setup.createBooking(b.id, { quantity: 1 }),

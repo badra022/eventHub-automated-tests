@@ -46,19 +46,7 @@ Severity: **Critical** (money or seats wrong for real users), **High**, **Medium
 | U3 | The form's own messages and the browser's native validation both fire on empty fields (`required` attributes show "Please fill out this field."), so users can see two different messages for one problem | Probe on 2026-11-13 | S04 asserts the app messages |
 | U4 | **Accessibility defect (R11, Medium):** axe reports a serious `color-contrast` violation on the "(max N)" label of the booking form: `#9ca3af` on `#ffffff` = 2.53:1, WCAG AA needs 4.5:1 for 14 px text. Keyboard-only booking works (Tab order name, email, phone, Confirm; Enter submits) | 2 of 2 axe runs on 2026-11-13 | S09 scan (`@excluded`), S09 keyboard (passes) |
 | U5 | On a sold-out event the counter still shows "1" next to "(max 0)" and the summary still prices 1 ticket ($500 x 1 = $500), although nothing can be booked | S08 ARIA baseline | S08 |
-
-## 5. Test-framework issues found and fixed
-
-| ID | Issue | Fix |
-|---|---|---|
-| F1 | The `update_snapshots` workflow job ran `--update-snapshots=all` and committed `*.aria.yml`, replacing the regex baselines with one run's literal values (commit 9a7e687); push run #6 failed on S16/S21 and the S02 totals were loosened to `/\d+/` | Job uses `--update-snapshots=changed` and commits only `*-linux.png`; baselines restored (commit 6ef96fc) |
-| F2 | S32 compared API and UI rules from hard-coded values | Shared rules table + a booking-form counterpart test |
-| F3 | S38 parsed response bodies before asserting the status | Status asserted first; bodies left to the client's debug log |
-| F4 | GET requests failed on transient `ECONNRESET`/`EACCES` from the public server (risk T1) | GET-only retry with a warning in the log; POST/DELETE are never retried |
-| F5 | S12 depended on the decimal string format (`toFixed(2)`) | Schema check; exact numeric total kept |
-| F6 | The first push went straight to `main` without a PR | New work goes through a branch and a PR |
-| F7 | "Clear all bookings" was modelled as an in-page dialog; it is a native `confirm()`, and waiting for it after the click deadlocked the test | `MyBookingsPage.clearAllBookings` registers the dialog handler before clicking |
-| F8 | A cleanup `DELETE /bookings/:id` got `socket hang up (ECONNRESET)` and failed S08 after its assertions passed; only GET was retried | Cleanup in `BookingsService` and `EventsService` opts into `retryOnNetworkError` (a 404 on the retry counts as gone); test-path DELETEs are still not retried |
+| U6 | When the seats run out after the event page loaded, the API's rejection is shown as a toast ("Only 0 seat(s) available, but 1 requested"), but the page keeps showing "2 / 2 seats" and an enabled Confirm button until it is reloaded, inviting the user to retry | Observed 2026-11-14; the page shows SOLD OUT only after a reload | [ui/S34](ui/S34-seatsGoneBeforeSubmitShowsError.spec.ts) |
 
 ## 6. Environment notes
 

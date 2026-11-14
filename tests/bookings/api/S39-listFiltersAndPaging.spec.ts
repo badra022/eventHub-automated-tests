@@ -4,8 +4,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S39 - status, eventId, page and limit filter and page the booking list',
     {
@@ -17,10 +15,10 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'risk', description: 'R4' },
       ],
     },
-    async ({ bookingSetup, bookingsService, data }) => {
+    async ({ bookingSetup, bookingsService, dataFactory }) => {
       const { eventA, eventB, refsA, refB } = await test.step('two events: 3 bookings on A, 1 on B (API)', async () => {
-        const a = await bookingSetup.createEvent(data.events);
-        const b = await bookingSetup.createEvent(data.events);
+        const a = await bookingSetup.createEvent(dataFactory.event());
+        const b = await bookingSetup.createEvent(dataFactory.event());
         const onA = await bookingSetup.createBookings(a.id, 3);
         const [onB] = await bookingSetup.createBookings(b.id, 1);
         return { eventA: a, eventB: b, refsA: onA.map((x) => x.bookingRef), refB: onB.bookingRef };
@@ -74,7 +72,7 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'clarification', description: 'Spec: limit minimum 1. Today limit=0 is silently replaced by the default 10 instead of a 400' },
       ],
     },
-    async ({ bookingsService }) => {
+    async ({ bookingsService, dataFactory }) => {
       const response = await bookingsService.requestList({ limit: 0 });
       await expect(response).toHaveStatus(200);
       const body = (await response.json()) as { pagination: { limit: number } };
@@ -98,7 +96,7 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         },
       ],
     },
-    async ({ bookingsService }) => {
+    async ({ bookingsService, dataFactory }) => {
       const response = await bookingsService.requestList({ limit: 101 });
       if (response.status() === 200) {
         const body = (await response.json()) as { pagination: { limit: number } };

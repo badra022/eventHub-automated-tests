@@ -1,14 +1,11 @@
 import { test, expect } from '../../../fixtures/api';
 import { ValidationErrorResponseSchema } from '../../../assertions';
-import { buildEventInput } from '../../../helpers/bookings';
 import type { ValidationErrorResponse } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'pastEvent' } });
-
   test(
     'S36 - an event dated in the past cannot be created, so it cannot be booked',
     {
@@ -25,8 +22,8 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         },
       ],
     },
-    async ({ eventsService, data }) => {
-      const input = buildEventInput(data.events);
+    async ({ eventsService, dataFactory }) => {
+      const input = dataFactory.event('past');
       logger.debug('Past event payload', { input });
 
       const response = await test.step('POST /events with a date in the past', async () => {

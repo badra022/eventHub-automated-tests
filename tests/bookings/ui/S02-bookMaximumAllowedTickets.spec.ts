@@ -1,18 +1,17 @@
 import { test, expect } from '../../../fixtures/app';
-import { calculateExpectedTotal, toCustomerDetails } from '../../../helpers/bookings';
+import { calculateExpectedTotal } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
+// Baselines show the price, so it comes from the kind (standard $1,500, lastSeats $500), never generated
 const CASES = [
-  { events: 'conference', label: '10 tickets, the per-booking maximum', expectedMax: 10 },
-  { events: 'lastSeats', label: 'every seat left when fewer than 10 remain', expectedMax: 2 },
-];
+  { kind: 'standard', label: '10 tickets, the per-booking maximum', expectedMax: 10 },
+  { kind: 'lastSeats', label: 'every seat left when fewer than 10 remain', expectedMax: 2 },
+] as const;
 
-for (const { events, label, expectedMax } of CASES) {
-  test.describe(`US-114 AC1 - Create a booking and see the confirmation (${events})`, () => {
-    test.use({ testData: { events, bookings: 'validCustomer' } });
-
+for (const { kind, label, expectedMax } of CASES) {
+  test.describe(`US-114 AC1 - Create a booking and see the confirmation (${kind})`, () => {
     test(
       `S02 - booking ${label} succeeds and takes that many seats`,
       {
@@ -25,11 +24,11 @@ for (const { events, label, expectedMax } of CASES) {
           { type: 'gap', description: 'G3: max = min(10, seats left)' },
         ],
       },
-      async ({ booking, bookingsService, eventsService, data }) => {
-        const customer = toCustomerDetails(data.bookings);
+      async ({ booking, bookingsService, eventsService, dataFactory }) => {
+        const customer = dataFactory.customer();
 
         const event = await test.step('create the event to book against (API)', async () => {
-          const created = await booking.setup.createEvent(data.events);
+          const created = await booking.setup.createEvent(dataFactory.event(kind));
           logger.info('Step done: event ready', { scenarioId: 'S02', eventId: created.id, availableSeats: created.availableSeats });
           return created;
         });

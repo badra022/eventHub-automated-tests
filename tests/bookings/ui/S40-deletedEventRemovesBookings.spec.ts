@@ -6,8 +6,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S40 - deleting an event also removes its bookings, and its page shows a clear "Event not found"',
     {
@@ -20,9 +18,9 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'gap', description: 'G10: users are not told that their booking disappeared with the event' },
       ],
     },
-    async ({ page, booking, bookingsService, eventsService, navigator, data }) => {
+    async ({ page, booking, bookingsService, eventsService, navigator, dataFactory }) => {
       const { event, created } = await test.step('create an event and a booking (API)', async () => {
-        const createdEvent = await booking.setup.createEvent(data.events);
+        const createdEvent = await booking.setup.createEvent(dataFactory.event());
         return { event: createdEvent, created: await booking.setup.createBooking(createdEvent.id, { quantity: 2 }) };
       });
 

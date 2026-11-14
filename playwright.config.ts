@@ -4,16 +4,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-/** Where each worker's account comes from: the encrypted pool in test-data/users.json, or a fresh registration */
-export type AccountSource = 'pool' | 'register';
-
+/** Worker accounts always come from the encrypted pool in test-data/users.json: registered accounts can never be deleted. */
 export type TestOptions = {
   appEnv: AppEnvironment;
-  accountSource: AccountSource;
 };
 
 const appEnv = (process.env.APP_ENV ?? 'prod') as AppEnvironment;
-const accountSource = (process.env.ACCOUNT_SOURCE ?? 'pool') as AccountSource;
 
 const API_SPECS = /[\\/]api[\\/].*\.spec\.ts$/;
 const UI_SPECS = /[\\/]ui[\\/].*\.spec\.ts$/;
@@ -39,7 +35,6 @@ export default defineConfig<TestOptions>({
   },
   use: {
     appEnv,
-    accountSource,
     headless: true,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

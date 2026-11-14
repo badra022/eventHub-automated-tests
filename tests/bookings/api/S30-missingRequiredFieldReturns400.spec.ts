@@ -1,6 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
 import { ValidationErrorResponseSchema } from '../../../assertions';
-import { buildBookingInput } from '../../../helpers/bookings';
 import type { CreateBookingInput, ValidationErrorResponse } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
@@ -9,8 +8,6 @@ const logger = new Logger('Test');
 const REQUIRED_FIELDS: (keyof CreateBookingInput)[] = ['eventId', 'customerName', 'customerEmail', 'customerPhone', 'quantity'];
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const field of REQUIRED_FIELDS) {
     test(
       `S30 - a booking without ${field} is rejected with 400 naming ${field}`,
@@ -23,13 +20,13 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
           { type: 'risk', description: 'R7' },
         ],
       },
-      async ({ bookingSetup, bookingsService, eventsService, data }) => {
+      async ({ bookingSetup, bookingsService, eventsService, dataFactory }) => {
         const event = await test.step('create an event (API)', async () => {
-          return bookingSetup.createEvent(data.events);
+          return bookingSetup.createEvent(dataFactory.event());
         });
 
         const response = await test.step(`POST /bookings without ${field}`, async () => {
-          const payload: Record<string, unknown> = { ...buildBookingInput(event.id) };
+          const payload: Record<string, unknown> = { ...dataFactory.booking(event.id) };
           delete payload[field];
           logger.debug('Payload', { missingField: field, payload });
           return bookingsService.requestBooking(payload);

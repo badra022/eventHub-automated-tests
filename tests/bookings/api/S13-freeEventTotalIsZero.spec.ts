@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC2 - Total price is ticket price × number of tickets', () => {
-  test.use({ testData: { events: 'freeWorkshop' } });
-
   test(
     'S13 - booking a free event (price 0) gives a total of 0',
     {
@@ -19,11 +17,11 @@ test.describe('US-114 AC2 - Total price is ticket price × number of tickets', (
         { type: 'gap', description: 'G7: free events are not mentioned in the story' },
       ],
     },
-    async ({ bookingSetup, eventsService, data }) => {
+    async ({ bookingSetup, eventsService, dataFactory }) => {
       const quantity = 3;
 
       const event = await test.step('create a free event (API)', async () => {
-        const created = await bookingSetup.createEvent(data.events);
+        const created = await bookingSetup.createEvent(dataFactory.event('free'));
         expect(Number(created.price)).toBe(0);
         return created;
       });

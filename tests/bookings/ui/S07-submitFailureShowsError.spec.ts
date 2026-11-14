@@ -1,5 +1,4 @@
 import { test, expect } from '../../../fixtures/app';
-import { toCustomerDetails } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
@@ -10,8 +9,6 @@ const FAILURES = [
 ];
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({ testData: { events: 'conference', bookings: 'validCustomer' } });
-
   for (const { label, expectedMessage, mode } of FAILURES) {
     test(
       `S07 - when ${label}, the page shows an error and no confirmation`,
@@ -25,9 +22,9 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
           { type: 'note', description: 'The messages are the raw server/axios texts; whether they are user-friendly enough is in FINDINGS.md' },
         ],
       },
-      async ({ page, booking, bookingsService, data }) => {
+      async ({ page, booking, bookingsService, dataFactory }) => {
         const { event, eventPage } = await test.step(`create an event (API), make POST /bookings fail (${mode}), open the event`, async () => {
-          const created = await booking.setup.createEvent(data.events);
+          const created = await booking.setup.createEvent(dataFactory.event());
           await page.route(/\/api\/bookings$/, (route) => {
             if (route.request().method() !== 'POST') return route.continue();
             return mode === 'server error'
@@ -38,7 +35,7 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         });
 
         await test.step('submit a valid form', async () => {
-          await eventPage.bookingForm.fillCustomer(toCustomerDetails(data.bookings));
+          await eventPage.bookingForm.fillCustomer(dataFactory.customer());
           await eventPage.bookingForm.submit();
         });
 

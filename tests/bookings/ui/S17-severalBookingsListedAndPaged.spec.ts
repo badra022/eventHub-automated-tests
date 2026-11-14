@@ -6,8 +6,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S17 - bookings for several events are all listed, and the list pages correctly with a small limit',
     {
@@ -19,11 +17,11 @@ test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
         { type: 'risk', description: 'R4' },
       ],
     },
-    async ({ booking, bookingsService, data }) => {
+    async ({ booking, bookingsService, dataFactory }) => {
       const created = await test.step('three events with one booking each, 1, 2 and 3 tickets (API)', async () => {
         const pairs: { event: Event; booking: Booking }[] = [];
         for (const quantity of [1, 2, 3]) {
-          const event = await booking.setup.createEvent(data.events);
+          const event = await booking.setup.createEvent(dataFactory.event());
           pairs.push({ event, booking: await booking.setup.createBooking(event.id, { quantity }) });
         }
         return pairs;

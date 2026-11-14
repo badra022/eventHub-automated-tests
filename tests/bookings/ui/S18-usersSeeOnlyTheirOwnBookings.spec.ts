@@ -6,8 +6,6 @@ import { Navigation } from '../../../utils/navigation';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     "S18 - user B does not see user A's booking, neither in GET /bookings nor in My Bookings",
     {
@@ -19,9 +17,9 @@ test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
         { type: 'risk', description: 'R6' },
       ],
     },
-    async ({ booking, bookingsService, otherUser, storageStateFor, browser, envConfig, data }) => {
+    async ({ booking, bookingsService, otherUser, storageStateFor, browser, envConfig, dataFactory }) => {
       const created = await test.step('user A creates an event and a booking (API)', async () => {
-        const event = await booking.setup.createEvent(data.events);
+        const event = await booking.setup.createEvent(dataFactory.event());
         return booking.setup.createBooking(event.id);
       });
 

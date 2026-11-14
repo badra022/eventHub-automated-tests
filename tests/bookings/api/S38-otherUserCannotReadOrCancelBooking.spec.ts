@@ -7,8 +7,6 @@ const logger = new Logger('Test');
 const FORBIDDEN = [403, 404];
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     "S38 - user B cannot read or cancel user A's booking",
     {
@@ -21,11 +19,11 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'observation', description: 'GET answers 403 while DELETE answers 404 for the same foreign booking' },
       ],
     },
-    async ({ bookingSetup, bookingsService, eventsService, authUser, otherUser, data }) => {
+    async ({ bookingSetup, bookingsService, eventsService, authUser, otherUser, dataFactory }) => {
       const asUserB = { token: otherUser.token };
 
       const { event, booking } = await test.step('user A creates an event and a booking (API)', async () => {
-        const created = await bookingSetup.createEvent(data.events);
+        const created = await bookingSetup.createEvent(dataFactory.event());
         const createdBooking = await bookingSetup.createBooking(created.id, { quantity: 2 });
         logger.info('Step done: user A booked', { scenarioId: 'S38', userA: authUser.id, userB: otherUser.id, bookingRef: createdBooking.bookingRef });
         return { event: created, booking: createdBooking };

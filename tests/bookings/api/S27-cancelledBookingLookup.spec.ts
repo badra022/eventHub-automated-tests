@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S27 - after cancelling, the booking can no longer be found by id, reference or status filter',
     {
@@ -23,9 +21,9 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         },
       ],
     },
-    async ({ bookingSetup, bookingsService, data }) => {
+    async ({ bookingSetup, bookingsService, dataFactory }) => {
       const booking = await test.step('create an event and a booking, then cancel it (API)', async () => {
-        const event = await bookingSetup.createEvent(data.events);
+        const event = await bookingSetup.createEvent(dataFactory.event());
         const created = await bookingSetup.createBooking(event.id);
         await bookingsService.cancelBooking(created.id);
         return created;

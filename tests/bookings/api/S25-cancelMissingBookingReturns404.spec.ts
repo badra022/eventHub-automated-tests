@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S25 - cancelling an already-cancelled booking returns 404 and changes no seats',
     {
@@ -18,9 +16,9 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         { type: 'risk', description: 'R2' },
       ],
     },
-    async ({ bookingSetup, bookingsService, eventsService, data }) => {
+    async ({ bookingSetup, bookingsService, eventsService, dataFactory }) => {
       const { event, booking } = await test.step('create an event and a booking of 2 tickets, then cancel it', async () => {
-        const created = await bookingSetup.createEvent(data.events);
+        const created = await bookingSetup.createEvent(dataFactory.event());
         const createdBooking = await bookingSetup.createBooking(created.id, { quantity: 2 });
         await bookingsService.cancelBooking(createdBooking.id);
         return { event: created, booking: createdBooking };
@@ -54,7 +52,7 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         { type: 'risk', description: 'R2' },
       ],
     },
-    async ({ bookingsService }) => {
+    async ({ bookingsService, dataFactory }) => {
       const unknownId = 999_999_999;
       const response = await bookingsService.requestCancel(unknownId);
       await expect(response).toHaveStatus(404);
@@ -80,7 +78,7 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         },
       ],
     },
-    async ({ bookingsService }) => {
+    async ({ bookingsService, dataFactory }) => {
       const response = await bookingsService.requestCancel('abc');
       logger.info('Non-numeric id answer', { scenarioId: 'S25', status: response.status() });
       expect([400, 404]).toContain(response.status());
