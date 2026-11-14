@@ -60,6 +60,8 @@ export abstract class BaseAPIClient {
         headers,
         params: options.params,
         ...(data === undefined ? {} : { data }),
+      }).catch((error: unknown) => {
+        throw redactCredentials(error);
       });
     let response: APIResponse;
     try {
@@ -93,6 +95,21 @@ export abstract class BaseAPIClient {
 }
 
 const MAX_LOGGED_TEXT = 4_000;
+
+const BEARER_HEADER = /(authorization:\s*bearer\s+)\S+/gi;
+const JWT = /eyJ[\w-]+\.[\w-]+\.[\w-]*/g;
+
+/**
+ * Playwright network errors print the request headers in their call log, bearer token included; the message ends up
+ * in CI logs and reports, so tokens are removed before the error goes anywhere.
+ */
+export function redactCredentials(error: unknown): unknown {
+  if (!(error instanceof Error)) return error;
+  const redact = (text: string) => text.replace(BEARER_HEADER, '$1[redacted]').replace(JWT, '[redacted-jwt]');
+  error.message = redact(error.message);
+  if (error.stack) error.stack = redact(error.stack);
+  return error;
+}
 
 async function readBody(response: APIResponse): Promise<unknown> {
   const text = await response.text().catch(() => '');

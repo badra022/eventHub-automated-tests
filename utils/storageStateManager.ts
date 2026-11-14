@@ -4,7 +4,7 @@ import path from 'node:path';
 export interface StorageStateManagerConfig {
   /** Directory of the session files. Defaults to `.auth` in the working directory. */
   authDir?: string;
-  /** A session file older than this is logged in again. Defaults to 12 hours (the app's token lives longer). */
+  /** A session file older than this is logged in again. Defaults to 4 hours, so a live token lingers on disk only briefly. */
   maxAgeMs?: number;
   /** How long a worker waits for another worker's login, and after which a left-over lock counts as stale. */
   lockTimeoutMs?: number;
@@ -21,9 +21,10 @@ export class StorageStateManager {
 
   constructor(config: StorageStateManagerConfig = {}) {
     this.authDir = config.authDir ?? path.resolve(process.cwd(), '.auth');
-    this.maxAgeMs = config.maxAgeMs ?? 12 * 60 * 60 * 1000;
+    this.maxAgeMs = config.maxAgeMs ?? 4 * 60 * 60 * 1000;
     this.lockTimeoutMs = config.lockTimeoutMs ?? 60_000;
-    fs.mkdirSync(this.authDir, { recursive: true });
+    // Session files hold live tokens: owner-only access (no effect on Windows ACLs)
+    fs.mkdirSync(this.authDir, { recursive: true, mode: 0o700 });
   }
 
   pathFor(name: string): string {
@@ -47,6 +48,7 @@ export class StorageStateManager {
           if (!this.isFresh(name)) {
             const tmp = `${file}.${process.pid}.tmp`;
             await login(tmp);
+            fs.chmodSync(tmp, 0o600);
             fs.renameSync(tmp, file);
           }
         } finally {
