@@ -12,6 +12,9 @@ type ApiFixtures = {
 
 /** API-only tests: test data + API login + services. No fixture here needs a browser, so none is launched. */
 export const test = mergeTests(dataTest, servicesTest).extend<ApiFixtures>({
+  // Playwright resolves storageState even without a page; a fixed value keeps it from launching a browser to log in
+  storageState: { cookies: [], origins: [] },
+
   bookingSetup: async ({ eventsService, bookingsService }, use) => {
     await use(new BookingSetupHelpers({ eventsService, bookingsService }));
   },

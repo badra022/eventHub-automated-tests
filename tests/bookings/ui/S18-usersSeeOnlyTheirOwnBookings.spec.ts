@@ -19,7 +19,7 @@ test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
         { type: 'risk', description: 'R6' },
       ],
     },
-    async ({ booking, bookingsService, otherUser, otherUserStorageStatePath, browser, envConfig, data }) => {
+    async ({ booking, bookingsService, otherUser, storageStateFor, browser, envConfig, data }) => {
       const created = await test.step('user A creates an event and a booking (API)', async () => {
         const event = await booking.setup.createEvent(data.events);
         return booking.setup.createBooking(event.id);
@@ -39,7 +39,7 @@ test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
       });
 
       await test.step("user B's My Bookings does not show it", async () => {
-        const contextB = await browser.newContext({ storageState: otherUserStorageStatePath });
+        const contextB = await browser.newContext({ storageState: await storageStateFor('userB') });
         try {
           const pageB = await contextB.newPage();
           const myBookingsB = new MyBookingsPage(pageB);
