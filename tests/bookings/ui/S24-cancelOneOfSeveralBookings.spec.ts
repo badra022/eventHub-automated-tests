@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S24 - cancelling one of several bookings affects only that booking, in the UI and the API',
     {
@@ -18,9 +16,9 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         { type: 'risk', description: 'R5' },
       ],
     },
-    async ({ booking, bookingsService, eventsService, data }) => {
+    async ({ booking, bookingsService, eventsService, dataFactory }) => {
       const { event, bookings } = await test.step('create an event and three bookings of 1, 2 and 3 tickets (API)', async () => {
-        const createdEvent = await booking.setup.createEvent(data.events);
+        const createdEvent = await booking.setup.createEvent(dataFactory.event());
         const created = [];
         for (const quantity of [1, 2, 3]) {
           created.push(await booking.setup.createBooking(createdEvent.id, { quantity }));

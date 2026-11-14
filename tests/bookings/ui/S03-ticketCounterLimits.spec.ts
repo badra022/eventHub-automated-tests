@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S03 - the ticket counter enables and disables its buttons at 1 and at the maximum, and the summary follows it',
     {
@@ -19,9 +17,9 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         { type: 'related', description: 'S02 covers the state at the maximum and booking it; S03 covers the transitions' },
       ],
     },
-    async ({ booking, data }) => {
+    async ({ booking, dataFactory }) => {
       const event = await test.step('create an event with more than 10 seats (API) and open it', async () => {
-        return booking.setup.createEvent(data.events);
+        return booking.setup.createEvent(dataFactory.event());
       });
       const eventPage = await booking.ui.openEvent(event.id);
       const form = eventPage.bookingForm;

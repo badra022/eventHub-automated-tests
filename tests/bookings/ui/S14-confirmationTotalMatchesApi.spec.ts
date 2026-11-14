@@ -1,12 +1,10 @@
 import { test, expect } from '../../../fixtures/app';
-import { formatDisplayedPrice, toCustomerDetails } from '../../../helpers/bookings';
+import { formatDisplayedPrice } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC2 - Total price is ticket price × number of tickets', () => {
-  test.use({ testData: { events: 'conference', bookings: 'groupBooking' } });
-
   test(
     'S14 - the total on the confirmation equals the totalPrice the API stored for the same booking',
     {
@@ -18,12 +16,12 @@ test.describe('US-114 AC2 - Total price is ticket price × number of tickets', (
         { type: 'risk', description: 'R1' },
       ],
     },
-    async ({ booking, bookingsService, data }) => {
-      const customer = toCustomerDetails(data.bookings);
-      const quantity = Number(data.bookings.quantity);
+    async ({ booking, bookingsService, dataFactory }) => {
+      const customer = dataFactory.customer();
+      const quantity = 3;
 
       const event = await test.step('create the event to book against (API)', async () => {
-        return booking.setup.createEvent(data.events);
+        return booking.setup.createEvent(dataFactory.event());
       });
 
       const result = await test.step(`book ${quantity} tickets (UI)`, async () => {

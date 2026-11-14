@@ -16,8 +16,6 @@ const CASES: { label: string; customer: CustomerDetails }[] = [
 ];
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const { label, customer } of CASES) {
     test(
       `S04 - submitting with ${label} shows every field's message and sends no booking`,
@@ -31,9 +29,9 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
           { type: 'related', description: 'Single invalid fields are covered field by field in S32 (booking form side)' },
         ],
       },
-      async ({ booking, bookingsService, data }) => {
+      async ({ booking, bookingsService, dataFactory }) => {
         const event = await test.step('create an event (API) and open it', async () => {
-          const created = await booking.setup.createEvent(data.events);
+          const created = await booking.setup.createEvent(dataFactory.event());
           await booking.ui.openEvent(created.id);
           return created;
         });

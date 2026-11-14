@@ -15,20 +15,18 @@ type BaseTestFixtures = {
 };
 
 /**
- * Root of every fixture file: the worker-scoped options (`appEnv`, `accountSource`) and the resolved environment config.
+ * Root of every fixture file: the worker-scoped `appEnv` option and the resolved environment config.
  * Worker scope lets the auth fixtures log in once per worker.
  */
 export const test = base.extend<BaseTestFixtures, TestOptions & BaseWorkerFixtures>({
   appEnv: ['prod', { option: true, scope: 'worker' }],
-  accountSource: ['pool', { option: true, scope: 'worker' }],
 
   envConfig: [
-    async ({ appEnv, accountSource }, use, workerInfo) => {
+    async ({ appEnv }, use, workerInfo) => {
       const config = getEnvConfig(appEnv);
       logger.info('Worker started', {
         project: workerInfo.project.name,
         appEnv,
-        accountSource,
         appBaseUrl: config.APP_BASE_URL,
         apiBaseUrl: config.API_BASE_URL,
         logLevel: process.env.LOG_LEVEL ?? 'info',

@@ -4,8 +4,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({ testData: { events: 'lastSeats' } });
-
   test(
     'S08 - a sold-out event says so and its booking form cannot be submitted',
     {
@@ -17,9 +15,9 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         { type: 'gap', description: 'G4' },
       ],
     },
-    async ({ booking, eventsService, data }) => {
+    async ({ booking, eventsService, dataFactory }) => {
       const event = await test.step('create an event and book every seat (API)', async () => {
-        const created = await booking.setup.createEvent(data.events);
+        const created = await booking.setup.createEvent(dataFactory.event('lastSeats'));
         await booking.setup.createBooking(created.id, { quantity: created.availableSeats });
         expect(await eventsService.getAvailableSeats(created.id)).toBe(0);
         return created;

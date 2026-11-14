@@ -1,6 +1,5 @@
 import { createHmac } from 'node:crypto';
 import { test, expect } from '../../../fixtures/api';
-import { buildBookingInput } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
@@ -25,8 +24,6 @@ const TOKENS: { label: string; token: string | null; note?: string }[] = [
 ];
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const { label, token, note } of TOKENS) {
     test(
       `S37 - booking endpoints answer 401 to ${label}`,
@@ -40,18 +37,18 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
           ...(note ? [{ type: 'note', description: note }] : []),
         ],
       },
-      async ({ bookingSetup, bookingsService, data }) => {
+      async ({ bookingSetup, bookingsService, dataFactory }) => {
         const options = { token };
 
         const { event, booking } = await test.step('create an event and a booking as the owner (API)', async () => {
-          const created = await bookingSetup.createEvent(data.events);
+          const created = await bookingSetup.createEvent(dataFactory.event());
           return { event: created, booking: await bookingSetup.createBooking(created.id) };
         });
 
         await test.step(`every booking endpoint rejects ${label} with 401`, async () => {
           const statuses = {
             list: (await bookingsService.requestList({}, options)).status(),
-            create: (await bookingsService.requestBooking(buildBookingInput(event.id), options)).status(),
+            create: (await bookingsService.requestBooking(dataFactory.booking(event.id), options)).status(),
             getById: (await bookingsService.fetchBooking(booking.id, options)).status(),
             getByRef: (await bookingsService.fetchBookingByRef(booking.bookingRef, options)).status(),
             cancel: (await bookingsService.requestCancel(booking.id, options)).status(),

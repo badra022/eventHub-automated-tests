@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC4 - Cancel a booking', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S21 - cancelling from My Bookings asks for confirmation, shows a success message and removes the booking',
     {
@@ -20,9 +18,9 @@ test.describe('US-114 AC4 - Cancel a booking', () => {
         { type: 'gap', description: 'G5: today a cancelled booking is deleted, not kept as Cancelled' },
       ],
     },
-    async ({ booking, bookingsService, eventsService, data }) => {
+    async ({ booking, bookingsService, eventsService, dataFactory }) => {
       const { event, created } = await test.step('create an event and a booking (API)', async () => {
-        const createdEvent = await booking.setup.createEvent(data.events);
+        const createdEvent = await booking.setup.createEvent(dataFactory.event());
         return { event: createdEvent, created: await booking.setup.createBooking(createdEvent.id) };
       });
 

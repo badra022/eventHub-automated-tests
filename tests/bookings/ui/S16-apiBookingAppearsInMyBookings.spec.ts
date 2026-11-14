@@ -5,6 +5,7 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
+  // The card baselines show the title, city and month, so this test keeps the fixed template from test-data/events.json
   test.use({ testData: { events: 'conference' } });
 
   test(
@@ -19,11 +20,11 @@ test.describe('US-114 AC3 - The booking appears in My Bookings', () => {
         { type: 'risk', description: 'R4' },
       ],
     },
-    async ({ booking, data }) => {
+    async ({ booking, data, dataFactory }) => {
       const quantity = 2;
 
       const { event, created } = await test.step('create an event and a booking (API)', async () => {
-        const createdEvent = await booking.setup.createEvent(data.events);
+        const createdEvent = await booking.setup.createEvent(dataFactory.pinnedEvent(data.events));
         const createdBooking = await booking.setup.createBooking(createdEvent.id, { quantity });
         logger.info('Step done: booked through the API', { scenarioId: 'S16', bookingRef: createdBooking.bookingRef });
         return { event: createdEvent, created: createdBooking };

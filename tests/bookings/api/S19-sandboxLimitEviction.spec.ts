@@ -1,5 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
-import { buildBookingInput, buildEventInput } from '../../../helpers/bookings';
+import type { EventHubFactories } from '../../../data/factories';
 import type { ApiSuccess, Booking, BookingsService, Event, EventsService } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
@@ -10,7 +10,7 @@ const SANDBOX_LIMIT = 9;
 type SandboxServices = { eventsService: EventsService; bookingsService: BookingsService };
 
 /** Empties the dedicated account, creates an event and fills the sandbox with 9 bookings; returns the oldest. */
-async function fillSandbox({ eventsService, bookingsService }: SandboxServices, template: Record<string, unknown>) {
+async function fillSandbox({ eventsService, bookingsService }: SandboxServices, dataFactory: EventHubFactories) {
   const leftover = await bookingsService.listBookings({ limit: 100 });
   if (leftover.pagination.total > 0) {
     logger.warn('The sandbox-limit account still holds bookings from an earlier run; cancelling them', {
@@ -23,18 +23,18 @@ async function fillSandbox({ eventsService, bookingsService }: SandboxServices, 
   }
   expect((await bookingsService.listBookings()).pagination.total).toBe(0);
 
-  const event = await eventsService.createEvent(buildEventInput(template));
+  const event = await eventsService.createEvent(dataFactory.event());
   const bookings: Booking[] = [];
   for (let i = 0; i < SANDBOX_LIMIT; i++) {
-    bookings.push(await bookingsService.createBooking(buildBookingInput(event.id)));
+    bookings.push(await bookingsService.createBooking(dataFactory.booking(event.id)));
   }
   expect((await bookingsService.listBookings({ limit: 100 })).pagination.total).toBe(SANDBOX_LIMIT);
   logger.info('Sandbox filled to its limit', { scenarioId: 'S19', eventId: event.id, oldest: bookings[0].bookingRef });
   return { event, oldest: bookings[0] };
 }
 
-async function bookTenth(bookingsService: BookingsService, event: Event): Promise<ApiSuccess<Booking> & Record<string, unknown>> {
-  const response = await bookingsService.requestBooking(buildBookingInput(event.id));
+async function bookTenth(bookingsService: BookingsService, dataFactory: EventHubFactories, event: Event): Promise<ApiSuccess<Booking> & Record<string, unknown>> {
+  const response = await bookingsService.requestBooking(dataFactory.booking(event.id));
   await expect(response).toHaveStatus(201);
   return (await response.json()) as ApiSuccess<Booking> & Record<string, unknown>;
 }
@@ -42,7 +42,6 @@ async function bookTenth(bookingsService: BookingsService, event: Event): Promis
 test.describe('US-114 AC3 - The booking appears in My Bookings (sandbox limit)', () => {
   // Both tests use the one dedicated account, so they must never run at the same time
   test.describe.configure({ mode: 'serial' });
-  test.use({ testData: { events: 'conference' } });
 
   test(
     'S19 - a 10th booking in one sandbox replaces the oldest one; the user is not warned',
@@ -60,13 +59,13 @@ test.describe('US-114 AC3 - The booking appears in My Bookings (sandbox limit)',
         { type: 'account', description: 'Runs on the dedicated sandboxLimitUser (test-data/otherUsers.json), never on a worker account' },
       ],
     },
-    async ({ sandboxLimitServices, data }) => {
+    async ({ sandboxLimitServices, dataFactory }) => {
       const { event, oldest } = await test.step(`fill the sandbox with ${SANDBOX_LIMIT} bookings`, async () => {
-        return fillSandbox(sandboxLimitServices, data.events);
+        return fillSandbox(sandboxLimitServices, dataFactory);
       });
 
       const tenth = await test.step('the 10th booking is accepted without any warning', async () => {
-        const body = await bookTenth(sandboxLimitServices.bookingsService, event);
+        const body = await bookTenth(sandboxLimitServices.bookingsService, dataFactory, event);
         logger.info('10th booking response', { scenarioId: 'S19', message: body.message, keys: Object.keys(body) });
         expect(body.message).toBe('Booking confirmed!');
         expect(Object.keys(body).sort()).toEqual(['data', 'message', 'success']);
@@ -103,10 +102,10 @@ test.describe('US-114 AC3 - The booking appears in My Bookings (sandbox limit)',
         { type: 'account', description: 'Runs on the dedicated sandboxLimitUser (test-data/otherUsers.json), never on a worker account' },
       ],
     },
-    async ({ sandboxLimitServices, data }) => {
+    async ({ sandboxLimitServices, dataFactory }) => {
       const { event } = await test.step(`fill the sandbox with ${SANDBOX_LIMIT} bookings and add a 10th`, async () => {
-        const filled = await fillSandbox(sandboxLimitServices, data.events);
-        await bookTenth(sandboxLimitServices.bookingsService, filled.event);
+        const filled = await fillSandbox(sandboxLimitServices, dataFactory);
+        await bookTenth(sandboxLimitServices.bookingsService, dataFactory, filled.event);
         return filled;
       });
 

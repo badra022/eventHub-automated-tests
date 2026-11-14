@@ -2,6 +2,8 @@ import { test as base } from './base';
 import { Logger } from '../utils/logger';
 import type { AppEnvironment } from '../config/env';
 import { TestDataRegistry } from '../utils/testDataRegistry';
+import { EventHubFactories } from '../data/factories';
+import { seedFrom } from '../data/generators/eventHubFaker';
 
 const logger = new Logger('TestData');
 
@@ -24,6 +26,11 @@ export type ResolvedData<T extends TestDataKeys> = {
 
 type DataFixtures = {
   data: ResolvedData<TestDataKeys>;
+  /**
+   * Generated, valid EventHub data (events, customers, bookings), seeded per test: the same test gets the same
+   * values on every run and retry. Replay any test's values with DATA_SEED=<seed from its annotations>.
+   */
+  dataFactory: EventHubFactories;
 };
 
 type DataOptions = {
@@ -40,5 +47,12 @@ export const test = base.extend<DataFixtures & DataOptions>({
       logger.debug('Test data values', { data });
     }
     await use(data);
+  },
+
+  dataFactory: async ({}, use, testInfo) => {
+    const seed = process.env.DATA_SEED ? Number(process.env.DATA_SEED) : seedFrom(testInfo.testId);
+    testInfo.annotations.push({ type: 'dataSeed', description: String(seed) });
+    logger.debug('Data generator seeded', { seed });
+    await use(new EventHubFactories(seed));
   },
 });

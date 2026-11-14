@@ -1,5 +1,4 @@
 import { test, expect } from '../../../fixtures/api';
-import { buildBookingInput } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
@@ -7,8 +6,6 @@ const logger = new Logger('Test');
 const PARALLEL_REQUESTS = 6;
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'lastSeats' } });
-
   test(
     `S35 - ${PARALLEL_REQUESTS} parallel bookings for the last seats sell exactly the seats left`,
     {
@@ -25,15 +22,15 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         },
       ],
     },
-    async ({ bookingSetup, bookingsService, eventsService, data }) => {
+    async ({ bookingSetup, bookingsService, eventsService, dataFactory }) => {
       const event = await test.step('create an event with very few seats (API)', async () => {
-        return bookingSetup.createEvent(data.events);
+        return bookingSetup.createEvent(dataFactory.event('lastSeats'));
       });
       const seats = event.availableSeats;
 
       const responses = await test.step(`fire ${PARALLEL_REQUESTS} single-ticket bookings at once`, async () => {
         const all = await Promise.all(
-          Array.from({ length: PARALLEL_REQUESTS }, () => bookingsService.requestBooking(buildBookingInput(event.id))),
+          Array.from({ length: PARALLEL_REQUESTS }, () => bookingsService.requestBooking(dataFactory.booking(event.id))),
         );
         logger.info('Step done: parallel requests answered', { scenarioId: 'S35', statuses: all.map((r) => r.status()) });
         return all;

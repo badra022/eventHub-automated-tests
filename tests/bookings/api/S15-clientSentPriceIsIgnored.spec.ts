@@ -1,5 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
-import { buildBookingInput, calculateExpectedTotal } from '../../../helpers/bookings';
+import { calculateExpectedTotal } from '../../../helpers/bookings';
 import { BOOKING_REF_PATTERN } from '../../../services';
 import type { ApiSuccess, Booking } from '../../../services';
 import { Logger } from '../../../utils/logger';
@@ -7,8 +7,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC2 - Total price is ticket price × number of tickets', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S15 - a client-sent totalPrice, status or reference is ignored; the server calculates the booking',
     {
@@ -20,16 +18,16 @@ test.describe('US-114 AC2 - Total price is ticket price × number of tickets', (
         { type: 'risk', description: 'R1' },
       ],
     },
-    async ({ bookingSetup, bookingsService, data }) => {
+    async ({ bookingSetup, bookingsService, dataFactory }) => {
       const quantity = 2;
       const tampered = { totalPrice: 1, status: 'cancelled', bookingRef: 'X-HACKED', userId: 1 };
 
       const event = await test.step('create a priced event (API)', async () => {
-        return bookingSetup.createEvent(data.events);
+        return bookingSetup.createEvent(dataFactory.event());
       });
 
       const booking = await test.step('POST a booking with client-calculated fields', async () => {
-        const payload = { ...buildBookingInput(event.id, { quantity }), ...tampered };
+        const payload = { ...dataFactory.booking(event.id, { quantity }), ...tampered };
         logger.debug('Tampered payload', { payload });
         const response = await bookingsService.requestBooking(payload);
         await expect(response).toHaveStatus(201);

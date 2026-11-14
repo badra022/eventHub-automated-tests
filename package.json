@@ -14,7 +14,7 @@
     "secret:encrypt": "tsx scripts/secret.ts encrypt",
     "secret:decrypt": "tsx scripts/secret.ts decrypt",
     "users:provision": "tsx scripts/provision-users.ts",
-    "auth:state": "tsx scripts/save-auth-state.ts"
+    "sandbox:cleanup": "tsx scripts/cleanup-sandboxes.ts"
   },
   "license": "ISC",
   "dependencies": {

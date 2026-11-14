@@ -5,8 +5,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S29 - GET by id and GET by reference return the booking that was created',
     {
@@ -18,9 +16,9 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'risk', description: 'R4' },
       ],
     },
-    async ({ bookingSetup, bookingsService, data }) => {
+    async ({ bookingSetup, bookingsService, dataFactory }) => {
       const created = await test.step('create an event and a booking (API)', async () => {
-        const event = await bookingSetup.createEvent(data.events);
+        const event = await bookingSetup.createEvent(dataFactory.event());
         return bookingSetup.createBooking(event.id, { quantity: 2 });
       });
 

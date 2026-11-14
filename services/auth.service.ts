@@ -55,18 +55,6 @@ export class AuthService {
     return body;
   }
 
-  /** Logs in, registering the account first when it does not exist yet (login returns 404). */
-  async loginOrRegister(credentials: UserCredentials): Promise<AuthResponse> {
-    const response = await this.client.login(credentials);
-    if (response.status() === 404) {
-      logger.warn('Account is not registered (login returned 404), registering it now', { email: credentials.email });
-      return this.register(credentials);
-    }
-    const body = await parseOk<AuthResponse>(response, 'Login');
-    logger.info('Logged in', { userId: body.user.id });
-    return body;
-  }
-
   async me(token: string): Promise<MeResponse> {
     const body = await parseOk<MeResponse>(await this.client.me({ token }), 'GET /auth/me');
     logger.debug('Token identity', { user: body.user });

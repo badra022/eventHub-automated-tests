@@ -9,13 +9,14 @@ Playwright + TypeScript tests for the [EventHub](https://eventhub.rahulshettyaca
 | `api/` | Thin REST clients (`AuthAPIClient`, `EventsAPIClient`, `BookingsAPIClient`, `HealthAPIClient`) and wire types |
 | `services/` | Domain operations over the clients (`AuthService`, `EventsService`, `BookingsService`, `HealthService`), with cleanup |
 | `pages/` | Page objects and `components/` |
-| `helpers/bookings/` | Shared workflows: `setup` (API seeding) and `ui` (browser journeys), payload builders |
+| `helpers/bookings/` | Shared workflows: `setup` (API seeding) and `ui` (browser journeys), field rules, expected-value helpers |
+| `data/` | Generated test data: `generators/eventHubFaker.ts` (seeded faker narrowed to valid EventHub values) and `factories.ts` (`event(kind)`, `customer()`, `booking()`), used through the `dataFactory` fixture |
 | `fixtures/` | `base` -> `data` / `auth` -> `services`, combined into `app.ts` (UI) and `api.ts` (API only) |
 | `assertions/` | Custom `expect` matchers |
 | `config/env.ts` | Environment URLs and secrets (`prod`, `local`) |
 | `utils/` | Logger, navigation, polling, retry, test data registry, encryption, common helpers |
-| `test-data/` | `events.json`, `bookings.json`, `users.json` (encrypted accounts) |
-| `scripts/` | `secret.ts` (encrypt/decrypt a value), `provision-users.ts` (register the account pool), `save-auth-state.ts` (UI login for playwright-cli), `cli/` (playwright-cli snippets) |
+| `test-data/` | `users.json` / `otherUsers.json` (encrypted accounts), `events.json` (the one pinned event for visual baselines) |
+| `scripts/` | `secret.ts` (encrypt/decrypt a value), `provision-users.ts` (register the account pool), `cleanup-sandboxes.ts` (delete leftover test events from every account) |
 
 ## Setup
 

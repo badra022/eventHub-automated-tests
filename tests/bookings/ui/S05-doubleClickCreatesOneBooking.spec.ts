@@ -1,12 +1,9 @@
 import { test, expect } from '../../../fixtures/app';
-import { toCustomerDetails } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({ testData: { events: 'conference', bookings: 'validCustomer' } });
-
   test(
     'S05 - double-clicking Confirm Booking creates only one booking',
     {
@@ -19,16 +16,16 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         { type: 'gap', description: 'G9' },
       ],
     },
-    async ({ page, booking, bookingsService, eventsService, data }) => {
+    async ({ page, booking, bookingsService, eventsService, dataFactory }) => {
       let bookingRequests = 0;
       page.on('request', (request) => {
         if (request.method() === 'POST' && /\/api\/bookings$/.test(request.url())) bookingRequests++;
       });
 
       const { event, eventPage } = await test.step('create an event (API) and fill the form', async () => {
-        const created = await booking.setup.createEvent(data.events);
+        const created = await booking.setup.createEvent(dataFactory.event());
         const opened = await booking.ui.openEvent(created.id);
-        await opened.bookingForm.fillCustomer(toCustomerDetails(data.bookings));
+        await opened.bookingForm.fillCustomer(dataFactory.customer());
         return { event: created, eventPage: opened };
       });
 

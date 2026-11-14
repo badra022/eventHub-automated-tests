@@ -18,7 +18,7 @@ export const test = mergeTests(dataTest, servicesTest).extend<AppFixtures>({
     await use(new Navigation(page, { appBaseUrl: envConfig.APP_BASE_URL }));
   },
 
-  booking: async ({ page, navigator, eventsService, bookingsService }, use) => {
-    await use(createBookingHelpers({ page, navigator, eventsService, bookingsService }));
+  booking: async ({ page, navigator, eventsService, bookingsService, dataFactory }, use) => {
+    await use(createBookingHelpers({ page, navigator, eventsService, bookingsService, dataFactory }));
   },
 });

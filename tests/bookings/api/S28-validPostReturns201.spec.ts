@@ -1,6 +1,5 @@
 import { test, expect } from '../../../fixtures/api';
 import { CreateBookingResponseSchema } from '../../../assertions';
-import { buildBookingInput } from '../../../helpers/bookings';
 import { BOOKING_REF_PATTERN } from '../../../services';
 import type { ApiSuccess, Booking } from '../../../services';
 import { Logger } from '../../../utils/logger';
@@ -8,8 +7,6 @@ import { Logger } from '../../../utils/logger';
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
-  test.use({ testData: { events: 'conference' } });
-
   test(
     'S28 - a valid POST returns 201 with a confirmed booking that matches the schema',
     {
@@ -22,12 +19,12 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings', () => {
         { type: 'specDeviation', description: 'bookingRef is <letter>-XXXXXX, not EVT-XXXXXX; prices are strings, not numbers' },
       ],
     },
-    async ({ bookingSetup, bookingsService, data }) => {
+    async ({ bookingSetup, bookingsService, dataFactory }) => {
       const event = await test.step('create an event (API)', async () => {
-        return bookingSetup.createEvent(data.events);
+        return bookingSetup.createEvent(dataFactory.event());
       });
 
-      const input = buildBookingInput(event.id, { quantity: 2 });
+      const input = dataFactory.booking(event.id, { quantity: 2 });
       const response = await test.step('POST /bookings with a valid payload', async () => {
         logger.debug('Payload', { input });
         return bookingsService.requestBooking(input);

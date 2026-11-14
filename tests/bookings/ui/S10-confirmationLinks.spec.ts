@@ -1,13 +1,10 @@
 import { test, expect } from '../../../fixtures/app';
-import { toCustomerDetails } from '../../../helpers/bookings';
 import { EventsPage, MyBookingsPage } from '../../../pages';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({ testData: { events: 'conference', bookings: 'validCustomer' } });
-
   test(
     'S10 - "View My Bookings" on the confirmation opens My Bookings with the new booking',
     {
@@ -18,10 +15,10 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         { type: 'acceptanceCriteria', description: 'AC1' },
       ],
     },
-    async ({ page, booking, data }) => {
+    async ({ page, booking, dataFactory }) => {
       const result = await test.step('book 1 ticket through the UI', async () => {
-        const event = await booking.setup.createEvent(data.events);
-        return booking.ui.bookTickets(event.id, toCustomerDetails(data.bookings), 1);
+        const event = await booking.setup.createEvent(dataFactory.event());
+        return booking.ui.bookTickets(event.id, dataFactory.customer(), 1);
       });
 
       await test.step('the link opens /bookings and lists the booking', async () => {
@@ -45,10 +42,10 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         { type: 'acceptanceCriteria', description: 'AC1' },
       ],
     },
-    async ({ page, booking, data }) => {
+    async ({ page, booking, dataFactory }) => {
       const result = await test.step('book 1 ticket through the UI', async () => {
-        const event = await booking.setup.createEvent(data.events);
-        return booking.ui.bookTickets(event.id, toCustomerDetails(data.bookings), 1);
+        const event = await booking.setup.createEvent(dataFactory.event());
+        return booking.ui.bookTickets(event.id, dataFactory.customer(), 1);
       });
 
       await test.step('the link opens /events', async () => {

@@ -1,13 +1,11 @@
 import { test, expect } from '../../../fixtures/app';
 import { BookingSchema } from '../../../assertions';
-import { calculateExpectedTotal, formatDisplayedPrice, toCustomerDetails } from '../../../helpers/bookings';
+import { calculateExpectedTotal, formatDisplayedPrice } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC2 - Total price is ticket price × number of tickets', () => {
-  test.use({ testData: { events: 'decimalPriceWorkshop', bookings: 'groupBooking' } });
-
   test(
     'S12 - a decimal price gives an exact total in the API; the UI shows it rounded to whole dollars',
     {
@@ -23,12 +21,12 @@ test.describe('US-114 AC2 - Total price is ticket price × number of tickets', (
         },
       ],
     },
-    async ({ booking, bookingsService, data }) => {
-      const customer = toCustomerDetails(data.bookings);
-      const quantity = Number(data.bookings.quantity);
+    async ({ booking, bookingsService, dataFactory }) => {
+      const customer = dataFactory.customer();
+      const quantity = 3;
 
       const event = await test.step('create an event with a decimal price (API)', async () => {
-        const created = await booking.setup.createEvent(data.events);
+        const created = await booking.setup.createEvent(dataFactory.event('decimalPrice'));
         logger.info('Step done: event ready', { scenarioId: 'S12', eventId: created.id, price: created.price });
         return created;
       });

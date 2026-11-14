@@ -1,14 +1,11 @@
 import { test, expect } from '../../../fixtures/app';
-import { formatDisplayedPrice, toCustomerDetails } from '../../../helpers/bookings';
+import { formatDisplayedPrice } from '../../../helpers/bookings';
 import { BOOKING_REF_PATTERN } from '../../../services';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
-  test.use({
-    testData: { events: 'conference', bookings: 'validCustomer' },
-  });
 
   test(
     'S01 - booking 1 ticket shows a confirmation with the reference, customer, tickets and total',
@@ -22,20 +19,33 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
         { type: 'risk', description: 'R12' },
       ],
     },
-    async ({ booking, bookingsService, eventsService, data }) => {
-      const customer = toCustomerDetails(data.bookings);
+    async ({ booking, bookingsService, eventsService, dataFactory }) => {
+      const customer = dataFactory.customer();
       logger.debug('Customer used for the booking', { ...customer });
 
       const event = await test.step('create the event to book against (API)', async () => {
-        const created = await booking.setup.createEvent(data.events);
+        const created = await booking.setup.createEvent(dataFactory.event());
         logger.info('Step done: event ready', { scenarioId: 'S01', eventId: created.id, availableSeats: created.availableSeats });
         return created;
       });
 
-      const { bookingRef, eventPage } = await test.step('book 1 ticket from the event page (UI)', async () => {
+      const { bookingRef, eventPage, requestBody } = await test.step('book 1 ticket from the event page (UI)', async () => {
         const result = await booking.ui.bookTickets(event.id, customer, 1);
         logger.info('Step done: booked through the UI', { scenarioId: 'S01', bookingRef: result.bookingRef });
         return result;
+      });
+
+      await test.step('the page sent exactly the event, customer and quantity, as numbers where expected', async () => {
+        logger.debug('Booking request the page sent', { requestBody });
+        // Exact match: no extra fields (e.g. a price computed in the browser) and no string-typed numbers
+        expect(requestBody).toStrictEqual({
+          eventId: event.id,
+          customerName: customer.customerName,
+          customerEmail: customer.customerEmail,
+          customerPhone: customer.customerPhone,
+          quantity: 1,
+        });
+        logger.info('Step done: request body verified', { scenarioId: 'S01' });
       });
 
       await test.step('the confirmation shows the reference, customer, tickets and total', async () => {
@@ -57,6 +67,7 @@ test.describe('US-114 AC1 - Create a booking and see the confirmation', () => {
           eventId: event.id,
           customerName: customer.customerName,
           customerEmail: customer.customerEmail,
+          customerPhone: customer.customerPhone,
           quantity: 1,
           totalPrice: event.price,
           status: 'confirmed',

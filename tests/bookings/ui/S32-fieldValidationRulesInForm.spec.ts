@@ -1,12 +1,10 @@
 import { test, expect } from '../../../fixtures/app';
-import { FIELD_RULE_CASES, buildCustomer, layersDisagree, toUiField } from '../../../helpers/bookings';
+import { FIELD_RULE_CASES, layersDisagree, toUiField } from '../../../helpers/bookings';
 import { Logger } from '../../../utils/logger';
 
 const logger = new Logger('Test');
 
 test.describe('US-114 AC5 - The same works through POST /api/bookings (booking form side)', () => {
-  test.use({ testData: { events: 'conference' } });
-
   for (const rule of FIELD_RULE_CASES) {
     const { label, field, value, uiError, clarification } = rule;
     test(
@@ -22,11 +20,11 @@ test.describe('US-114 AC5 - The same works through POST /api/bookings (booking f
           ...(clarification ? [{ type: 'clarification', description: clarification }] : []),
         ],
       },
-      async ({ booking, bookingsService, data }) => {
-        const customer = buildCustomer({ [field]: value });
+      async ({ booking, bookingsService, dataFactory }) => {
+        const customer = dataFactory.customer({ [field]: value });
 
         const event = await test.step('create the event to book against (API) and open it', async () => {
-          const created = await booking.setup.createEvent(data.events);
+          const created = await booking.setup.createEvent(dataFactory.event());
           await booking.ui.openEvent(created.id);
           return created;
         });

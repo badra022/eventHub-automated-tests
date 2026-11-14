@@ -15,6 +15,17 @@ export interface UiBookingResult {
   /** Booking returned by the POST the UI sent */
   booking: Booking;
   eventPage: EventDetailPage;
+  /** JSON body of the POST /bookings the page sent */
+  requestBody: Record<string, unknown>;
+}
+
+export interface UiBookingAttempt {
+  eventPage: EventDetailPage;
+  /** Status the API answered to the page's POST /bookings */
+  status: number;
+  /** Parsed response body (raw text when not JSON) */
+  body: unknown;
+  requestBody: Record<string, unknown>;
 }
 
 export interface UiHelpersDependencies {
@@ -117,7 +128,17 @@ export class BookingUiHelpers {
     return myBookings;
   }
 
-  private async submitBookingForm(customer: CustomerDetails, quantity: number): Promise<UiBookingResult> {
+  /**
+   * Submits the open booking form and returns what the page sent and what the API answered, without failing on an
+   * error status: for tests where the API is expected to reject the booking.
+   */
+  async attemptBookingOnOpenEventPage(customer: CustomerDetails, quantity = 1): Promise<UiBookingAttempt> {
+    const attempt = await this.submit(customer, quantity);
+    this.logger.info('Booking attempt answered', { status: attempt.status, body: attempt.body });
+    return attempt;
+  }
+
+  private async submit(customer: CustomerDetails, quantity: number): Promise<UiBookingAttempt> {
     const eventPage = new EventDetailPage(this.deps.page);
     const form = eventPage.bookingForm;
     await form.waitForLoaded();
@@ -133,13 +154,29 @@ export class BookingUiHelpers {
     await form.submit();
     this.logger.info('Submitted the booking form');
     const response = await createResponse;
-    if (!response.ok()) {
-      const body = await response.text();
-      this.logger.error('Booking through the UI failed', { status: response.status(), url: this.deps.page.url(), body });
-      throw new Error(`Booking through the UI failed: ${response.status()} ${body}`);
+    // Read the body at once: after a 401 the page navigates away and the body is gone
+    const text = await response.text().catch(() => '');
+    const requestBody = response.request().postDataJSON() as Record<string, unknown>;
+    this.logger.debug('Booking request the page sent', { requestBody, status: response.status() });
+    let body: unknown = text;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      // not JSON: keep the raw text
     }
-    const { data: booking } = (await response.json()) as ApiSuccess<Booking>;
-    this.deps.bookingsService.track(booking.id);
+    if (response.ok()) {
+      this.deps.bookingsService.track((body as ApiSuccess<Booking>).data.id);
+    }
+    return { eventPage, status: response.status(), body, requestBody };
+  }
+
+  private async submitBookingForm(customer: CustomerDetails, quantity: number): Promise<UiBookingResult> {
+    const { eventPage, status, body, requestBody } = await this.submit(customer, quantity);
+    if (status < 200 || status >= 300) {
+      this.logger.error('Booking through the UI failed', { status, url: this.deps.page.url(), body });
+      throw new Error(`Booking through the UI failed: ${status} ${JSON.stringify(body)}`);
+    }
+    const { data: booking } = body as ApiSuccess<Booking>;
     this.logger.debug('Booking returned by the POST the UI sent', { booking });
 
     await eventPage.confirmation.waitForLoaded();
@@ -157,6 +194,6 @@ export class BookingUiHelpers {
       quantity,
       totalPrice: booking.totalPrice,
     });
-    return { bookingRef, booking, eventPage };
+    return { bookingRef, booking, eventPage, requestBody };
   }
 }

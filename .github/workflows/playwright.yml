@@ -46,7 +46,6 @@ permissions:
 env:
   CI: true
   APP_ENV: ${{ inputs.app_env || 'prod' }}
-  ACCOUNT_SOURCE: ${{ vars.ACCOUNT_SOURCE || 'pool' }}
   LOG_LEVEL: ${{ inputs.log_level || vars.LOG_LEVEL || 'info' }}
 
 jobs:
@@ -131,6 +130,26 @@ jobs:
           name: blob-report-${{ matrix.shard }}
           path: blob-report
           retention-days: 7
+
+  cleanup:
+    name: Clean up leftover test data
+    needs: test
+    # Also after failed or cancelled runs; only events older than 30 minutes are deleted, so other runs keep theirs
+    if: ${{ always() && needs.test.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: ${{ inputs.app_env || 'prod' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Delete test events left in the pool accounts
+        env:
+          TEST_DATA_KEY: ${{ secrets.TEST_DATA_KEY }}
+        run: npm run sandbox:cleanup
 
   update-snapshots:
     name: Update Linux visual baselines

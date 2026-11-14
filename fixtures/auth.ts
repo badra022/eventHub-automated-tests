@@ -4,10 +4,8 @@ import { testDataRegistry } from './data';
 import { AuthService } from '../services/auth.service';
 import type { UserCredentials } from '../api/types';
 import type { AppEnvironment, EnvConfig } from '../config/env';
-import type { AccountSource } from '../playwright.config';
 import { LoginPage } from '../pages/login.page';
 import { decryptRecord } from '../utils/crypto';
-import { generateRandomText, uniqueSuffix } from '../utils/common';
 import { Logger } from '../utils/logger';
 import { Navigation } from '../utils/navigation';
 import { StorageStateManager } from '../utils/storageStateManager';
@@ -18,7 +16,7 @@ const storageStates = new StorageStateManager();
 
 /**
  * Accounts a test can act as:
- * - `worker`: this worker's own account (pool slot, or registered when ACCOUNT_SOURCE=register). One account per worker
+ * - `worker`: this worker's own pool account (test-data/users.json). One account per worker
  *   keeps each 9-booking sandbox private to one worker (risk T2).
  * - `userB`: user B for isolation and authorisation tests, shared by all workers, so only read with it or attempt
  *   forbidden actions; never create data in its sandbox.
@@ -48,7 +46,6 @@ export class Accounts {
 
   constructor(
     private readonly appEnv: AppEnvironment,
-    private readonly accountSource: AccountSource,
     private readonly envConfig: EnvConfig,
     private readonly playwright: PlaywrightWorkerArgs['playwright'],
     private readonly workerInfo: WorkerInfo,
@@ -98,19 +95,6 @@ export class Accounts {
 
   private async resolveWorkerAccount(): Promise<ResolvedAccount> {
     const worker = this.workerInfo.parallelIndex;
-    if (this.accountSource === 'register') {
-      const credentials = { email: `eventhub.qa.${uniqueSuffix()}@example.com`, password: generateRandomText(16) };
-      const context = await this.playwright.request.newContext();
-      try {
-        await new AuthService(context, { baseUrl: this.envConfig.API_BASE_URL }).register(credentials);
-      } finally {
-        await context.dispose();
-      }
-      logger.info('Registered a new account for this worker', { worker });
-      logger.debug('Worker account', { email: credentials.email, password: credentials.password });
-      return { key: `registered-${uniqueSuffix()}`, credentials };
-    }
-
     const keys = testDataRegistry.keys('users', this.appEnv);
     if (keys.length === 0) {
       logger.error('No pool accounts for this environment in test-data/users.json', { appEnv: this.appEnv });
@@ -186,8 +170,8 @@ type AuthWorkerFixtures = {
 
 export const test = base.extend<AuthTestFixtures, AuthWorkerFixtures>({
   accounts: [
-    async ({ appEnv, accountSource, envConfig, playwright }, use, workerInfo) => {
-      await use(new Accounts(appEnv, accountSource, envConfig, playwright, workerInfo));
+    async ({ appEnv, envConfig, playwright }, use, workerInfo) => {
+      await use(new Accounts(appEnv, envConfig, playwright, workerInfo));
     },
     { scope: 'worker' },
   ],
